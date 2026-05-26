@@ -1356,9 +1356,19 @@ button:disabled {
 
 /* Performance optimization for mobile devices */
 @media (max-width: 760px) {
-  body::before,
+  /* Replace the extremely expensive dotted radial gradients with a soft, performant nebula glow */
+  body::before {
+    background: 
+      radial-gradient(circle at 20% 10%, rgba(217, 164, 65, 0.15) 0%, transparent 50%),
+      radial-gradient(circle at 80% 80%, rgba(109, 142, 235, 0.12) 0%, transparent 50%);
+    background-size: cover;
+    opacity: 1;
+    transform: translateZ(0); /* Force GPU acceleration */
+  }
+
   body::after {
-    display: none;
+    background: linear-gradient(180deg, transparent 0%, rgba(0, 0, 0, 0.4) 100%);
+    transform: translateZ(0);
   }
   
   .otl-create-panel,
@@ -1366,6 +1376,27 @@ button:disabled {
   .otl-modal-overlay,
   .qx-segmented-container,
   .parchment-token {
+    /* Disable expensive blur */
     backdrop-filter: none !important;
+  }
+  
+  /* Simulate glassmorphism with rich opaque gradients for cards */
+  .otl-create-panel,
+  .reveal-secret-card {
+    background: 
+      linear-gradient(145deg, rgba(255, 255, 255, 0.06), transparent 42%),
+      linear-gradient(180deg, rgba(14, 18, 29, 0.96), rgba(9, 12, 20, 0.98)) !important;
+    box-shadow: 
+      0 16px 40px rgba(0, 0, 0, 0.6), 
+      inset 0 1px 0 rgba(255, 255, 255, 0.08) !important;
+  }
+  
+  .otl-modal-overlay {
+    background: rgba(7, 10, 17, 0.9) !important; /* Rich solid fallback for overlay */
+  }
+  
+  .qx-segmented-container,
+  .parchment-token {
+    background: rgba(18, 22, 34, 0.95) !important;
   }
 }
