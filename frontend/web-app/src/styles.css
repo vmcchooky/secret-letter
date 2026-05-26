@@ -15,7 +15,7 @@
   --otl-green: #58a67a;
   
   /* Brand Typography variables */
-  --qx-font-heading: "EB Garamond", Georgia, serif;
+  --qx-font-heading: "Playfair Display", Georgia, serif;
 }
 
 * {
@@ -190,7 +190,7 @@ button:disabled {
 .otl-minimal-header h1 {
   margin: 0;
   color: var(--otl-ink);
-  font-family: "EB Garamond", Georgia, serif;
+  font-family: "Playfair Display", Georgia, serif;
   font-size: 3.4rem;
   font-style: italic;
   font-weight: 500;
@@ -713,7 +713,7 @@ button:disabled {
 .success-result h2 {
   margin: 0;
   color: #f5e8cc;
-  font-family: "EB Garamond", Georgia, serif;
+  font-family: "Playfair Display", Georgia, serif;
   font-size: 1.95rem;
   font-style: italic;
   font-weight: 500;
@@ -884,7 +884,7 @@ button:disabled {
 .otl-modal-card h3 {
   margin: 0;
   color: var(--otl-ink);
-  font-family: "EB Garamond", Georgia, serif;
+  font-family: "Playfair Display", Georgia, serif;
   font-size: 1.45rem;
   font-style: italic;
   font-weight: 500;
