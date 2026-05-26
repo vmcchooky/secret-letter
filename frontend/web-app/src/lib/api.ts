@@ -265,7 +265,7 @@ function friendlySecretApiMessage(
     case "network_error":
       return "Không kết nối được máy chủ. Hãy kiểm tra mạng hoặc thử lại sau.";
     case "server_error":
-      return "Máy chủ đang gặp sự cố. Bí mật chưa được giải mã, hãy thử lại sau.";
+      return "Máy chủ đang gặp sự cố. Hãy thử lại sau.";
     default:
       return status === 429
         ? "Bạn thao tác hơi nhanh. Hãy thử lại sau ít phút."

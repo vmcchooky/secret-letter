@@ -10,7 +10,7 @@ export function HomePage() {
             <path d="M12 2l2.5 7.5L22 12l-7.5 2.5L12 22l-2.5-7.5L2 12l7.5-2.5L12 2Z" fill="currentColor" fillOpacity="0.22" />
           </svg>
         </div>
-        <p className="otl-brand">Quorix One-Time Link</p>
+        <p className="otl-brand">Powered by Quorix</p>
         <h1 id="home-title">
           <span className="otl-title-gradient">Secret Letter</span>
         </h1>

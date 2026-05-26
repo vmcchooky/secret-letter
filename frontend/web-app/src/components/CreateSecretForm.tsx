@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, type CSSProperties, type ChangeEvent, type FormEvent, type KeyboardEvent, type MouseEvent } from "react";
+import { useState, useEffect, useRef, useCallback, type CSSProperties, type ChangeEvent, type FormEvent, type KeyboardEvent, type MouseEvent } from "react";
 import { TactileButton } from "./TactileButton";
 import { createSecret } from "../lib/api";
 import {
@@ -167,8 +167,49 @@ export function CreateSecretForm() {
     }
   };
 
-  const shareSecretLink = () => {
-    setShowShareMenu(true);
+  const shareSecretLink = async () => {
+    // If native share is supported, try it first for a better mobile experience
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: "Secret Letter",
+          text: "Mật thư bảo mật dành cho bạn",
+          url: secretLink,
+        });
+        return;
+      } catch (err) {
+        // If aborted or failed, fallback to our custom modal
+        if (err instanceof Error && err.name !== "AbortError") {
+          setShowShareMenu(true);
+        }
+      }
+    } else {
+      setShowShareMenu(true);
+    }
+  };
+
+  const qrPressTimerRef = useRef<number | null>(null);
+
+  const downloadQrCode = useCallback(() => {
+    if (!qrCanvasRef.current) return;
+    const dataUrl = qrCanvasRef.current.toDataURL("image/png");
+    const link = document.createElement("a");
+    link.download = "secret-qr.png";
+    link.href = dataUrl;
+    link.click();
+  }, []);
+
+  const handleQrPointerDown = () => {
+    qrPressTimerRef.current = window.setTimeout(() => {
+      downloadQrCode();
+    }, 600); // 600ms for long press
+  };
+
+  const handleQrPointerUpOrLeave = () => {
+    if (qrPressTimerRef.current !== null) {
+      window.clearTimeout(qrPressTimerRef.current);
+      qrPressTimerRef.current = null;
+    }
   };
 
   const copySecretLinkFromKeyboard = (event: KeyboardEvent<HTMLDivElement>) => {
@@ -406,10 +447,17 @@ export function CreateSecretForm() {
             >
               <div className="otl-modal-card" onClick={(e) => e.stopPropagation()} onContextMenu={blockDecorativeContextMenu}>
                 <h3>Mã QR Giải Mã</h3>
-                <div className="otl-qrcode-canvas-wrapper">
+                <div 
+                  className="otl-qrcode-canvas-wrapper"
+                  onPointerDown={handleQrPointerDown}
+                  onPointerUp={handleQrPointerUpOrLeave}
+                  onPointerLeave={handleQrPointerUpOrLeave}
+                  onPointerCancel={handleQrPointerUpOrLeave}
+                  style={{ touchAction: "none" }}
+                >
                   <canvas ref={qrCanvasRef} />
                 </div>
-                <p className="otl-modal-hint">Người nhận quét mã để giải mã mật thư cục bộ</p>
+                <p className="otl-modal-hint">Nhấn giữ để tải xuống mã</p>
                 <TactileButton className="otl-modal-close-btn" onClick={() => setShowQr(false)}>Đóng</TactileButton>
               </div>
             </div>
@@ -422,7 +470,7 @@ export function CreateSecretForm() {
               onContextMenu={blockDecorativeContextMenu}
             >
               <div className="otl-modal-card share-card" onClick={(e) => e.stopPropagation()} onContextMenu={blockDecorativeContextMenu}>
-                <h3>Chia sẻ liên kết</h3>
+                <h3 style={{ fontFamily: "var(--qx-font-ui, Inter, sans-serif)", fontStyle: "normal", fontWeight: 600, fontSize: "1.25rem" }}>Chia sẻ liên kết</h3>
                 <div className="otl-share-grid">
                   <TactileButton className="otl-share-item-btn" onClick={() => { copyToClipboard(); setShowShareMenu(false); }}>
                     <div className="share-icon-circle bg-gold-gradient">
@@ -454,6 +502,22 @@ export function CreateSecretForm() {
                     </div>
                     <span>Email</span>
                   </a>
+                  {typeof navigator !== "undefined" && !!navigator.share && (
+                    <TactileButton className="otl-share-item-btn" onClick={() => {
+                      navigator.share({
+                        title: "Secret Letter",
+                        text: "Mật thư bảo mật dành cho bạn",
+                        url: secretLink,
+                      }).catch(() => {});
+                    }}>
+                      <div className="share-icon-circle" style={{ background: "linear-gradient(135deg, #a18cd1 0%, #fbc2eb 100%)", color: "white" }}>
+                        <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
+                        </svg>
+                      </div>
+                      <span>Khác...</span>
+                    </TactileButton>
+                  )}
                 </div>
                 <TactileButton className="otl-modal-close-btn" onClick={() => setShowShareMenu(false)}>Đóng</TactileButton>
               </div>

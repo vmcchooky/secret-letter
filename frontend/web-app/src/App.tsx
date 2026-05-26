@@ -18,7 +18,7 @@ function RevealRouteFallback() {
           textAlign: "center",
         }}
       >
-        <p className="otl-brand">Quorix One-Time Link</p>
+        <p className="otl-brand">Powered by Quorix</p>
         <h1
           style={{
             margin: 0,

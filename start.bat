@@ -5,6 +5,9 @@ echo  DANG KHOI DONG HE THONG (COSMIC THEME)
 echo ==============================================
 echo.
 
+echo [+] Dang khoi dong Redis qua Docker Compose...
+docker compose -f deploy/local/docker-compose.yml up -d
+echo.
 echo [+] Dang khoi dong Go Backend API tren port 8080...
 start "Go Backend API" cmd /k "go run ./backend/cmd/api"
 
