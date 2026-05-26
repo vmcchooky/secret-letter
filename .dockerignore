@@ -1,0 +1,14 @@
+.git
+.gitignore
+.codex-screenshots
+
+frontend/web-app/node_modules
+frontend/web-app/dist
+frontend/web-app/tsconfig.tsbuildinfo
+
+*.log
+*.exe
+
+deploy/prod/.env
+.env
+.env.local

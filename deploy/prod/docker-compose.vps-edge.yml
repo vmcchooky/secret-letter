@@ -1,0 +1,7 @@
+services:
+  caddy:
+    profiles: ["disabled-by-shared-vps-edge"]
+
+  api:
+    ports:
+      - "127.0.0.1:18080:8080"

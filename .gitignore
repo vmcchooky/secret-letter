@@ -1,0 +1,29 @@
+# OS / editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+.kiro/
+
+# Node / frontend
+frontend/web-app/node_modules/
+frontend/web-app/dist/
+frontend/web-app/tsconfig.tsbuildinfo
+
+# Go
+*.exe
+*.dll
+*.so
+*.dylib
+coverage.out
+
+# Env / runtime
+.env
+.env.local
+deploy/prod/.env
+
+# Logs
+*.log
+
+# Local Codex artifacts
+.codex-screenshots/
