@@ -1007,6 +1007,16 @@ button:disabled {
   box-shadow: 0 6px 14px rgba(230, 122, 134, 0.28);
 }
 
+.bg-messenger-gradient {
+  background: radial-gradient(circle at 30% 30%, #a464ff 0%, #0084ff 100%);
+  box-shadow: 0 6px 14px rgba(0, 132, 255, 0.32);
+}
+
+.bg-sms-gradient {
+  background: radial-gradient(circle at 30% 30%, #5fd87c 0%, #20b043 100%);
+  box-shadow: 0 6px 14px rgba(32, 176, 67, 0.32);
+}
+
 /* Animations for Group 2 success flows */
 @keyframes otl-seal-stamp {
   0% {

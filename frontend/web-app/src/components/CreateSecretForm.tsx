@@ -502,6 +502,22 @@ export function CreateSecretForm() {
                     </div>
                     <span>Email</span>
                   </a>
+                  <a className="otl-share-item-btn" href={`fb-messenger://share?link=${encodeURIComponent(secretLink)}`} target="_blank" rel="noopener noreferrer">
+                    <div className="share-icon-circle bg-messenger-gradient">
+                      <svg width="18" height="18" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M12 2C6.36 2 1.8 6.13 1.8 11.22c0 2.91 1.53 5.48 3.89 7.15v3.42l3.55-1.95c.87.24 1.79.37 2.76.37 5.64 0 10.2-4.13 10.2-9.22S17.64 2 12 2zm1.09 12.38-2.77-2.95-5.4 2.95 5.92-6.28 2.87 2.95 5.3-2.96-5.92 6.29z"/>
+                      </svg>
+                    </div>
+                    <span>Messenger</span>
+                  </a>
+                  <a className="otl-share-item-btn" href={`sms:?&body=${encodeURIComponent("Mật thư bảo mật: " + secretLink)}`}>
+                    <div className="share-icon-circle bg-sms-gradient">
+                      <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
+                      </svg>
+                    </div>
+                    <span>SMS</span>
+                  </a>
                   {typeof navigator !== "undefined" && !!navigator.share && (
                     <TactileButton className="otl-share-item-btn" onClick={() => {
                       navigator.share({
