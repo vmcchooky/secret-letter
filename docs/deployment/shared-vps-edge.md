@@ -1,11 +1,11 @@
-# one-time-link On The Shared Quorix VPS
+# secret-letter On The Shared Quorix VPS
 
 Use this when `secret.quorix.io.vn` and `api.secret.quorix.io.vn` are served by the host-level Caddy edge.
 
 ## Backend
 
 ```sh
-cd /opt/one-time-link
+cd /opt/secret-letter
 cp deploy/prod/.env.vps-edge.example deploy/prod/.env
 nano deploy/prod/.env
 
@@ -33,16 +33,16 @@ TRUSTED_PROXY_CIDRS=172.16.0.0/12
 ## Frontend
 
 ```sh
-cd /opt/one-time-link/frontend/web-app
+cd /opt/secret-letter/frontend/web-app
 cp ../../deploy/prod/frontend.env.vps-edge.example .env.production
 npm ci
 npm run build
 
-sudo install -d -m 755 /var/www/one-time-link/frontend/dist
-sudo rsync -a --delete dist/ /var/www/one-time-link/frontend/dist/
+sudo install -d -m 755 /var/www/secret-letter/frontend/dist
+sudo rsync -a --delete dist/ /var/www/secret-letter/frontend/dist/
 ```
 
-The host Caddy edge serves `/var/www/one-time-link/frontend/dist` for `secret.quorix.io.vn` and uses SPA fallback for app routes, including root-level short secret links such as `/:secretId`.
+The host Caddy edge serves `/var/www/secret-letter/frontend/dist` for `secret.quorix.io.vn` and uses SPA fallback for app routes, including root-level short secret links such as `/:secretId`.
 
 ## Verify
 

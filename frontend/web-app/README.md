@@ -1,6 +1,6 @@
-# Frontend - One-Time Link Web App
+# Frontend - Secret Letter Web App
 
-React + TypeScript frontend cho one-time-link application. Client-side encryption với Web Crypto API.
+React + TypeScript frontend cho secret-letter application. Client-side encryption với Web Crypto API.
 
 ## Current Status
 

@@ -14,7 +14,7 @@ RUN go mod download
 COPY backend/ ./backend/
 
 # Build statically linked binary
-RUN CGO_ENABLED=0 GOOS=linux go build -ldflags="-w -s" -o one-time-link-api ./backend/cmd/api
+RUN CGO_ENABLED=0 GOOS=linux go build -ldflags="-w -s" -o secret-letter-api ./backend/cmd/api
 
 # Final minimal stage
 FROM alpine:3.20
@@ -25,10 +25,10 @@ WORKDIR /app
 COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
 
 # Copy the built binary
-COPY --from=builder /app/one-time-link-api .
+COPY --from=builder /app/secret-letter-api .
 
 # Expose API port
 EXPOSE 8080
 
 # Run the API
-CMD ["./one-time-link-api"]
+CMD ["./secret-letter-api"]

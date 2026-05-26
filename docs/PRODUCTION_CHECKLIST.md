@@ -1,6 +1,6 @@
 # Production Deployment Checklist
 
-This checklist ensures a safe and successful production deployment of the one-time-link API.
+This checklist ensures a safe and successful production deployment of the secret-letter API.
 
 ## Pre-Deployment
 
@@ -131,7 +131,7 @@ This checklist ensures a safe and successful production deployment of the one-ti
 ### Deployment Steps
 
 - [ ] **Upload deployment package**
-  - Upload `one-time-link-api-{version}.tar.gz` to server
+  - Upload `secret-letter-api-{version}.tar.gz` to server
   - Extract to deployment directory
   - Verify file permissions
 
@@ -221,22 +221,22 @@ If issues are detected after deployment:
 
 1. **Stop new service**
    ```bash
-   sudo systemctl stop one-time-link-api
+   sudo systemctl stop secret-letter-api
    ```
 
 2. **Restore previous version**
    ```bash
-   cp /backup/one-time-link-api /usr/local/bin/
+   cp /backup/secret-letter-api /usr/local/bin/
    ```
 
 3. **Restore previous configuration**
    ```bash
-   cp /backup/.env /opt/one-time-link/
+   cp /backup/.env /opt/secret-letter/
    ```
 
 4. **Start service**
    ```bash
-   sudo systemctl start one-time-link-api
+   sudo systemctl start secret-letter-api
    ```
 
 5. **Verify rollback**

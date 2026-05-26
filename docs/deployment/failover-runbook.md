@@ -47,7 +47,7 @@ Neu primary chet dot ngot, nhung secret dang nam trong Redis primary co the mat.
 Day la danh doi hop ly cho MVP portfolio, vi:
 
 - secret la du lieu ngan han
-- one-time-link uu tien khong lo secret hon la phai backup tat ca secret
+- secret-letter uu tien khong lo secret hon la phai backup tat ca secret
 - he thong can de hieu, de van hanh
 
 ## 4. Khi nao can kich hoat failover
@@ -130,7 +130,7 @@ date
 df -h
 free -m
 systemctl status redis
-systemctl status one-time-link
+systemctl status secret-letter
 ```
 
 ## Buoc 3: Khoi dong service tren standby
@@ -139,7 +139,7 @@ Neu service chua chay:
 
 ```bash
 sudo systemctl start redis
-sudo systemctl start one-time-link
+sudo systemctl start secret-letter
 sudo systemctl start caddy
 ```
 

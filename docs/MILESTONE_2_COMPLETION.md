@@ -319,7 +319,7 @@ Milestone 2 đã hoàn thành thành công với tất cả acceptance criteria 
 ## Related Documentation
 
 - **Quick Reference:** [MILESTONE_2_QUICK_REFERENCE.md](MILESTONE_2_QUICK_REFERENCE.md)
-- **Milestone Tracking:** [product-spec/one-time-link-milestones.md](product-spec/one-time-link-milestones.md)
+- **Milestone Tracking:** [product-spec/secret-letter-milestones.md](product-spec/secret-letter-milestones.md)
 - **API Contract:** [contracts/public-http-api.md](contracts/public-http-api.md)
 - **Crypto Specs:** [contracts/crypto-and-api-decisions.md](contracts/crypto-and-api-decisions.md)
 

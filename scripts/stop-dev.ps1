@@ -1,4 +1,4 @@
-# Stop local development services for one-time-link.
+# Stop local development services for secret-letter.
 # Stops frontend/backend listeners on the default dev ports, then stops local Redis.
 
 [CmdletBinding()]
@@ -12,7 +12,7 @@ $ErrorActionPreference = "Stop"
 $repoRoot = Split-Path -Parent $PSScriptRoot
 $composeFile = Join-Path $repoRoot "deploy/local/docker-compose.yml"
 
-Write-Host "Stopping one-time-link local development services..." -ForegroundColor Cyan
+Write-Host "Stopping secret-letter local development services..." -ForegroundColor Cyan
 
 foreach ($port in $Ports) {
     $connections = Get-NetTCPConnection -LocalPort $port -State Listen -ErrorAction SilentlyContinue

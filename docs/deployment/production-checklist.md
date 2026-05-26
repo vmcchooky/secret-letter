@@ -5,14 +5,14 @@
 Checklist nay dung cho phuong an:
 
 - website ca nhan `quorix.io.vn` giu nguyen tren Vercel
-- frontend `one-time-link` deploy tren Vercel
+- frontend `secret-letter` deploy tren Vercel
 - backend Go + Redis chay tren 1 VPS
 - domain van do PA Viet Nam quan ly
 
 ## 2. Cau truc domain de xuat
 
 - `quorix.io.vn`: website ca nhan Hugo/PaperMod
-- `secret.quorix.io.vn`: frontend one-time-link
+- `secret.quorix.io.vn`: frontend secret-letter
 - `api.secret.quorix.io.vn`: backend API
 
 ## 3. Viec can chuan bi truoc khi deploy
@@ -78,7 +78,7 @@ go install golang.org/x/vuln/cmd/govulncheck@latest
 
 ### Project setup
 
-- tao project rieng cho frontend one-time-link
+- tao project rieng cho frontend secret-letter
 - root directory tro dung vao folder frontend
 - build command va output directory dung voi framework dang dung
 
@@ -146,7 +146,7 @@ go install golang.org/x/vuln/cmd/govulncheck@latest
 
 ### Configuration
 
-- `APP_SERVICE_NAME=one-time-link-api`
+- `APP_SERVICE_NAME=secret-letter-api`
 - `APP_ENV=production`
 - `APP_HOST=0.0.0.0`
 - `APP_PORT=8080`
@@ -257,7 +257,7 @@ Ly do:
 
 - day la du lieu ngan han
 - backup secret da ma hoa van tao them do phuc tap van hanh
-- voi san pham one-time-link, mat secret sau su co co the chap nhan hon so voi lo secret
+- voi san pham secret-letter, mat secret sau su co co the chap nhan hon so voi lo secret
 
 ## 13. Thu tu deploy de xuat
 

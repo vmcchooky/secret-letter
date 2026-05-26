@@ -6,7 +6,7 @@ import (
 	"errors"
 	"io"
 	"net/http"
-	"one-time-link/backend/internal/secret"
+	"secret-letter/backend/internal/secret"
 	"strings"
 	"time"
 )

@@ -1,5 +1,5 @@
 @echo off
-title Khoi dong Du an One-Time Link
+title Khoi dong Du an Secret Letter
 echo ==============================================
 echo  DANG KHOI DONG HE THONG (COSMIC THEME)
 echo ==============================================

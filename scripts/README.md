@@ -169,9 +169,9 @@ Script để build production-ready binary với security audit.
 5. Create deployment package
 
 **Output:**
-- `build/one-time-link-api-linux-amd64`
-- `build/one-time-link-api-windows-amd64.exe`
-- `build/one-time-link-api-{version}.tar.gz`
+- `build/secret-letter-api-linux-amd64`
+- `build/secret-letter-api-windows-amd64.exe`
+- `build/secret-letter-api-{version}.tar.gz`
 
 ## Development Workflow
 

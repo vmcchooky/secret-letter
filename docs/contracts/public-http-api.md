@@ -1,6 +1,6 @@
 # Public HTTP API Contract
 
-This document defines the complete API contract between the frontend and backend for the one-time-link application.
+This document defines the complete API contract between the frontend and backend for the secret-letter application.
 
 API field naming, crypto defaults, payload limits, and encoding rules are defined in `crypto-and-api-decisions.md`.
 
@@ -34,7 +34,7 @@ GET /readyz
 ### Success Response (200)
 ```json
 {
-  "service": "one-time-link-api",
+  "service": "secret-letter-api",
   "status": "healthy",
   "timestamp": "2026-04-16T12:00:00Z",
   "version": "1.0.0",
@@ -49,7 +49,7 @@ GET /readyz
 ### Error Response (503)
 ```json
 {
-  "service": "one-time-link-api",
+  "service": "secret-letter-api",
   "status": "unhealthy",
   "timestamp": "2026-04-16T12:00:00Z",
   "version": "1.0.0",

@@ -1,6 +1,6 @@
-# Contributing to One-Time Link
+# Contributing to Secret Letter
 
-Thank you for your interest in contributing to One-Time Link! This document provides guidelines for contributing to the project.
+Thank you for your interest in contributing to Secret Letter! This document provides guidelines for contributing to the project.
 
 ## Project Status
 
@@ -36,8 +36,8 @@ We welcome code contributions! Here's how to get started:
 ```bash
 # Fork the repository on GitHub
 # Then clone your fork
-git clone https://github.com/YOUR_USERNAME/one-time-link.git
-cd one-time-link
+git clone https://github.com/YOUR_USERNAME/secret-letter.git
+cd secret-letter
 ```
 
 #### 2. Set Up Development Environment
@@ -233,7 +233,7 @@ If you have questions about contributing:
 
 ## License
 
-By contributing to One-Time Link, you agree that your contributions will be licensed under the MIT License.
+By contributing to Secret Letter, you agree that your contributions will be licensed under the MIT License.
 
 ## Recognition
 
@@ -244,7 +244,7 @@ Contributors will be recognized in:
 
 ## Thank You!
 
-Thank you for contributing to One-Time Link! Your contributions help make this project better for everyone.
+Thank you for contributing to Secret Letter! Your contributions help make this project better for everyone.
 
 ---
 

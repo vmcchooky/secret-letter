@@ -31,7 +31,7 @@ type Config struct {
 
 func Load() Config {
 	return Config{
-		ServiceName:       getEnv("APP_SERVICE_NAME", "one-time-link-api"),
+		ServiceName:       getEnv("APP_SERVICE_NAME", "secret-letter-api"),
 		AppEnv:            getEnv("APP_ENV", "local"),
 		Host:              getEnv("APP_HOST", "0.0.0.0"),
 		Port:              getEnv("APP_PORT", "8080"),

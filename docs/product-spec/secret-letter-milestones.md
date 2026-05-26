@@ -1,4 +1,4 @@
-# One-Time Link Implementation Milestones
+# Secret Letter Implementation Milestones
 
 This roadmap prioritizes working software over architectural complexity, with clear learning objectives for each phase.
 

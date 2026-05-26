@@ -1,5 +1,5 @@
 #!/bin/bash
-# Load testing script for one-time-link API
+# Load testing script for secret-letter API
 
 set -e
 

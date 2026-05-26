@@ -1,6 +1,6 @@
 # Deployment Guide
 
-This guide covers the complete deployment strategy for the one-time-link application, optimized for portfolio use with low cost and high learning value.
+This guide covers the complete deployment strategy for the secret-letter application, optimized for portfolio use with low cost and high learning value.
 
 ## 1. Deployment Overview
 
@@ -141,27 +141,27 @@ sudo apt install caddy -y
 
 ```bash
 # Create application directory
-sudo mkdir -p /opt/one-time-link
-sudo chown deploy:deploy /opt/one-time-link
+sudo mkdir -p /opt/secret-letter
+sudo chown deploy:deploy /opt/secret-letter
 
 # Clone repository (or upload binary)
-cd /opt/one-time-link
-git clone https://github.com/your-username/one-time-link.git .
+cd /opt/secret-letter
+git clone https://github.com/your-username/secret-letter.git .
 
 # Build application
 cd backend
-go build -o /opt/one-time-link/api ./cmd/api
+go build -o /opt/secret-letter/api ./cmd/api
 
 # Create environment file
-sudo tee /opt/one-time-link/.env << EOF
-APP_SERVICE_NAME=one-time-link-api
+sudo tee /opt/secret-letter/.env << EOF
+APP_SERVICE_NAME=secret-letter-api
 APP_HOST=0.0.0.0
 APP_PORT=8080
 ALLOWED_ORIGIN=https://secret.quorix.io.vn
 EOF
 
 # Create systemd service
-sudo tee /etc/systemd/system/one-time-link.service << EOF
+sudo tee /etc/systemd/system/secret-letter.service << EOF
 [Unit]
 Description=One Time Link API
 After=network.target redis-server.service
@@ -171,9 +171,9 @@ Requires=redis-server.service
 Type=simple
 User=deploy
 Group=deploy
-WorkingDirectory=/opt/one-time-link
-ExecStart=/opt/one-time-link/api
-EnvironmentFile=/opt/one-time-link/.env
+WorkingDirectory=/opt/secret-letter
+ExecStart=/opt/secret-letter/api
+EnvironmentFile=/opt/secret-letter/.env
 Restart=always
 RestartSec=5
 
@@ -183,8 +183,8 @@ EOF
 
 # Enable and start service
 sudo systemctl daemon-reload
-sudo systemctl enable one-time-link
-sudo systemctl start one-time-link
+sudo systemctl enable secret-letter
+sudo systemctl start secret-letter
 ```
 
 ### 4.5 Caddy Configuration
@@ -241,15 +241,15 @@ Follow the same setup as primary VPS, but:
 
 ```bash
 # Create activation script
-tee /opt/one-time-link/activate-standby.sh << EOF
+tee /opt/secret-letter/activate-standby.sh << EOF
 #!/bin/bash
 sudo systemctl start redis-server
-sudo systemctl start one-time-link
+sudo systemctl start secret-letter
 sudo systemctl start caddy
 echo "Standby services activated"
 EOF
 
-chmod +x /opt/one-time-link/activate-standby.sh
+chmod +x /opt/secret-letter/activate-standby.sh
 ```
 
 ## 6. Deployment Process
@@ -267,11 +267,11 @@ chmod +x /opt/one-time-link/activate-standby.sh
 
 ```bash
 # On primary VPS
-cd /opt/one-time-link
+cd /opt/secret-letter
 git pull origin main
 cd backend
-go build -o /opt/one-time-link/api ./cmd/api
-sudo systemctl restart one-time-link
+go build -o /opt/secret-letter/api ./cmd/api
+sudo systemctl restart secret-letter
 
 # Verify deployment
 curl https://api.secret.quorix.io.vn/healthz
@@ -285,7 +285,7 @@ Create monitoring script:
 
 ```bash
 #!/bin/bash
-# /opt/one-time-link/health-check.sh
+# /opt/secret-letter/health-check.sh
 
 API_URL="https://api.secret.quorix.io.vn/healthz"
 RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" $API_URL)
@@ -302,7 +302,7 @@ fi
 
 ```bash
 # Rotate application logs
-sudo tee /etc/logrotate.d/one-time-link << EOF
+sudo tee /etc/logrotate.d/secret-letter << EOF
 /var/log/caddy/*.log {
     daily
     rotate 30
@@ -336,9 +336,9 @@ BACKUP_DIR="/home/deploy/backups/$(date +%Y%m%d)"
 mkdir -p $BACKUP_DIR
 
 # Backup configurations
-cp /opt/one-time-link/.env $BACKUP_DIR/
+cp /opt/secret-letter/.env $BACKUP_DIR/
 cp /etc/caddy/Caddyfile $BACKUP_DIR/
-cp /etc/systemd/system/one-time-link.service $BACKUP_DIR/
+cp /etc/systemd/system/secret-letter.service $BACKUP_DIR/
 
 # Compress backup
 tar -czf /home/deploy/backups/config-$(date +%Y%m%d).tar.gz $BACKUP_DIR
@@ -360,7 +360,7 @@ Monitor these indicators:
 1. **Activate standby services:**
    ```bash
    # On Oracle Cloud VPS
-   /opt/one-time-link/activate-standby.sh
+   /opt/secret-letter/activate-standby.sh
    ```
 
 2. **Update DNS record:**

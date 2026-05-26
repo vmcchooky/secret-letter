@@ -1,6 +1,6 @@
 # Hướng Dẫn Phát Triển
 
-Tài liệu này cung cấp hướng dẫn nhanh để thiết lập môi trường phát triển local cho dự án `one-time-link`.
+Tài liệu này cung cấp hướng dẫn nhanh để thiết lập môi trường phát triển local cho dự án `secret-letter`.
 
 ## Trạng Thái Dự Án
 
@@ -20,8 +20,8 @@ Tài liệu này cung cấp hướng dẫn nhanh để thiết lập môi trư�
 ### 1. Clone Repository
 
 ```bash
-git clone https://github.com/vmcchooky/one-time-link.git
-cd one-time-link
+git clone https://github.com/vmcchooky/secret-letter.git
+cd secret-letter
 ```
 
 ### 2. Khởi Động Redis
@@ -72,7 +72,7 @@ cp backend/.env.example backend/.env
 ```
 
 Các biến môi trường có sẵn:
-- `APP_SERVICE_NAME`: Tên service (mặc định: `one-time-link-api`)
+- `APP_SERVICE_NAME`: Tên service (mặc định: `secret-letter-api`)
 - `APP_ENV`: Môi trường chạy (`development` hoặc `production`)
 - `APP_HOST`: Host để bind (mặc định: `0.0.0.0`)
 - `APP_PORT`: Port để lắng nghe (mặc định: `8080`)
@@ -200,7 +200,7 @@ docker compose -f deploy/local/docker-compose.yml down
 ## Cấu Trúc Thư Mục
 
 ```
-one-time-link/
+secret-letter/
 ├── backend/           # Go backend API
 │   ├── cmd/api/      # Main application entry point
 │   └── internal/     # Internal packages
@@ -235,12 +235,12 @@ one-time-link/
 - [README.md](README.md) - Tổng quan dự án
 - [docs/README.md](docs/README.md) - Tài liệu chi tiết
 - [docs/contracts/public-http-api.md](docs/contracts/public-http-api.md) - API contract
-- [docs/product-spec/one-time-link-milestones.md](docs/product-spec/one-time-link-milestones.md) - Lộ trình phát triển
+- [docs/product-spec/secret-letter-milestones.md](docs/product-spec/secret-letter-milestones.md) - Lộ trình phát triển
 
 ## Đóng Góp
 
 Hiện tại dự án đã hoàn thành Milestone 4 và sẵn sàng cho production deployment. Vui lòng tham khảo:
-- [docs/product-spec/one-time-link-milestones.md](docs/product-spec/one-time-link-milestones.md) - Lộ trình phát triển
+- [docs/product-spec/secret-letter-milestones.md](docs/product-spec/secret-letter-milestones.md) - Lộ trình phát triển
 - [docs/MILESTONE_4_COMPLETION.md](docs/MILESTONE_4_COMPLETION.md) - Milestone 4 completion report
 - [docs/PRODUCTION_CHECKLIST.md](docs/PRODUCTION_CHECKLIST.md) - Production deployment checklist
 

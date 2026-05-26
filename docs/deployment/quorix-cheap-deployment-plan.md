@@ -5,7 +5,7 @@
 - Website ca nhan `quorix.io.vn` dang duoc build bang Hugo + PaperMod
 - Website ca nhan dang deploy tren Vercel
 - Domain duoc dang ky qua PA Viet Nam
-- Muc tieu cua `one-time-link` la:
+- Muc tieu cua `secret-letter` la:
   - bo sung vao portfolio
   - tang brand ca nhan
   - co san pham that de recruiter xem
@@ -16,7 +16,7 @@
 Phuong an re nhat va hop ly nhat o thoi diem hien tai la:
 
 - giu `quorix.io.vn` nhu hien tai tren Vercel
-- tao mot frontend project rieng cho `one-time-link` tren Vercel
+- tao mot frontend project rieng cho `secret-letter` tren Vercel
 - dung subdomain rieng, de xuat `secret.quorix.io.vn`
 - dung `api.secret.quorix.io.vn` tro toi 1 VPS nho
 - chay backend Go + Redis tren cung 1 VPS
@@ -33,7 +33,7 @@ Trong truong hop cu the cua ban, chi phi bat buoc tang them luc dau gan nhu chi 
 
 - domain `quorix.io.vn` ban da so huu roi
 - website ca nhan da chay tren Vercel
-- frontend one-time-link co the dung Vercel Hobby
+- frontend secret-letter co the dung Vercel Hobby
 - TLS co the lay mien phi qua Vercel va Let''s Encrypt
 
 ### Nhung khoan co the phat sinh sau nay
@@ -60,13 +60,13 @@ Co the dung chung domain goc, nhung khong nen dung chung app.
 ### Ly do
 
 - `quorix.io.vn` hien la website noi dung tinh
-- `one-time-link` la ung dung web co state, API, Redis, va backend runtime
+- `secret-letter` la ung dung web co state, API, Redis, va backend runtime
 - tach subdomain se de deploy hon, de debug hon, de giai thich hon khi recruiter hoi
 
 ### Cach tach de xuat
 
 - `quorix.io.vn`: website ca nhan Hugo/PaperMod
-- `secret.quorix.io.vn`: frontend one-time-link
+- `secret.quorix.io.vn`: frontend secret-letter
 - `api.secret.quorix.io.vn`: backend API
 
 ## 5. Kien truc deploy re nhat
@@ -92,7 +92,7 @@ graph TD
 ### Ly do
 
 - ban da co san he thong voi Vercel
-- frontend one-time-link can xu ly client-side encryption
+- frontend secret-letter can xu ly client-side encryption
 - Vercel rat hop cho static frontend va workflow portfolio
 
 ### 6.2 Backend
@@ -293,7 +293,7 @@ Voi muc tieu:
 Minh khuyen:
 
 1. Giu `quorix.io.vn` tren Vercel nhu hien tai.
-2. Tao `secret.quorix.io.vn` cho frontend one-time-link tren Vercel.
+2. Tao `secret.quorix.io.vn` cho frontend secret-letter tren Vercel.
 3. Tao `api.secret.quorix.io.vn` tro toi 1 VPS nho.
 4. Chay `Go API + Redis + Caddy` tren cung VPS.
 5. Chua dung managed Redis.
@@ -304,7 +304,7 @@ Minh khuyen:
 ### Phuong an toi thieu thuc te
 
 - website ca nhan: `0 USD` tang them
-- frontend one-time-link tren Vercel Hobby: `0 USD` tang them
+- frontend secret-letter tren Vercel Hobby: `0 USD` tang them
 - domain: `0 USD` tang them vi ban da co san
 - backend + Redis: `1 VPS`
 

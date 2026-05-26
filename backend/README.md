@@ -1,6 +1,6 @@
-# Backend - One-Time Link API
+# Backend - Secret Letter API
 
-Go backend cho one-time-link application. Production-ready với rate limiting, error handling, và performance optimization.
+Go backend cho secret-letter application. Production-ready với rate limiting, error handling, và performance optimization.
 
 ## Current Status
 
@@ -72,7 +72,7 @@ Backend sẽ lắng nghe tại `http://localhost:8080`
 Create `.env` file trong backend directory:
 
 ```bash
-SERVICE_NAME=one-time-link-api
+SERVICE_NAME=secret-letter-api
 HOST=0.0.0.0
 PORT=8080
 ALLOWED_ORIGIN=http://localhost:5173
@@ -117,7 +117,7 @@ GET /healthz
 GET /readyz
 Response: 200 OK
 {
-  "service": "one-time-link-api",
+  "service": "secret-letter-api",
   "status": "healthy",
   "timestamp": "2026-04-16T12:00:00Z",
   "version": "1.0.0",
@@ -249,7 +249,7 @@ All errors follow consistent format:
 # From repository root
 ./scripts/build-production.sh
 
-# Output: build/one-time-link-api-linux-amd64
+# Output: build/secret-letter-api-linux-amd64
 ```
 
 Build script includes:

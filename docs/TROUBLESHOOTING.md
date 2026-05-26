@@ -1,6 +1,6 @@
 # Troubleshooting Guide
 
-This guide helps diagnose and resolve common issues with the one-time-link API.
+This guide helps diagnose and resolve common issues with the secret-letter API.
 
 ## Table of Contents
 
@@ -72,7 +72,7 @@ redis-cli -h localhost -p 6379 ping
 **Check:**
 ```bash
 # Check binary permissions
-ls -l one-time-link-api
+ls -l secret-letter-api
 
 # Check file ownership
 ls -l .env
@@ -81,10 +81,10 @@ ls -l .env
 **Solution:**
 ```bash
 # Make binary executable
-chmod +x one-time-link-api
+chmod +x secret-letter-api
 
 # Fix ownership
-chown user:group one-time-link-api .env
+chown user:group secret-letter-api .env
 ```
 
 ---
@@ -99,7 +99,7 @@ API returns 500 errors, logs show Redis connection failures.
 **Check logs:**
 ```bash
 # Look for Redis errors
-grep -i "redis" /var/log/one-time-link/api.log
+grep -i "redis" /var/log/secret-letter/api.log
 ```
 
 **Test Redis connection:**
@@ -208,7 +208,7 @@ redis-cli get "ratelimit:create_secret:192.168.1.1"
 
 **Check logs for IP addresses:**
 ```bash
-grep "ip_hash" /var/log/one-time-link/api.log
+grep "ip_hash" /var/log/secret-letter/api.log
 ```
 
 **Solution:**
@@ -239,7 +239,7 @@ Slow response times, high latency, timeouts.
 
 **Check slow request logs:**
 ```bash
-grep "slow_request" /var/log/one-time-link/api.log | tail -20
+grep "slow_request" /var/log/secret-letter/api.log | tail -20
 ```
 
 **Run load test:**
@@ -292,7 +292,7 @@ connection pool: failed to dial
 
 **Check:**
 ```bash
-top -p $(pgrep one-time-link-api)
+top -p $(pgrep secret-letter-api)
 ```
 
 **Solution:**
@@ -306,7 +306,7 @@ top -p $(pgrep one-time-link-api)
 **Check:**
 ```bash
 # Monitor memory over time
-watch -n 5 'ps aux | grep one-time-link-api'
+watch -n 5 'ps aux | grep secret-letter-api'
 ```
 
 **Solution:**
@@ -466,10 +466,10 @@ Logs not appearing, logs missing information, log format issues.
 **Check log output:**
 ```bash
 # Follow logs
-tail -f /var/log/one-time-link/api.log
+tail -f /var/log/secret-letter/api.log
 
 # Check log permissions
-ls -l /var/log/one-time-link/
+ls -l /var/log/secret-letter/
 ```
 
 ### Solutions
@@ -484,18 +484,18 @@ ls -l /var/log/one-time-link/
 **Solution:**
 ```bash
 # Create log directory
-mkdir -p /var/log/one-time-link
+mkdir -p /var/log/secret-letter
 
 # Fix permissions
-chown user:group /var/log/one-time-link
-chmod 755 /var/log/one-time-link
+chown user:group /var/log/secret-letter
+chmod 755 /var/log/secret-letter
 ```
 
 #### 2. Log Format Issues
 
 **Check log format:**
 ```bash
-cat /var/log/one-time-link/api.log | head -5
+cat /var/log/secret-letter/api.log | head -5
 ```
 
 **Solution:**
@@ -507,7 +507,7 @@ cat /var/log/one-time-link/api.log | head -5
 
 **Check log size:**
 ```bash
-du -sh /var/log/one-time-link/
+du -sh /var/log/secret-letter/
 ```
 
 **Solution:**

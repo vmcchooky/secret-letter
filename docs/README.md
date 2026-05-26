@@ -1,13 +1,13 @@
-﻿# One-Time Link Documentation
+﻿# Secret Letter Documentation
 
-This directory contains the complete documentation for the one-time-link application, a secure secret sharing service designed for portfolio demonstration and learning.
+This directory contains the complete documentation for the secret-letter application, a secure secret sharing service designed for portfolio demonstration and learning.
 
 ## 📋 Documentation Overview
 
 ### Product Specification
-- **[Requirements](product-spec/one-time-link-requirements.md)** - Complete functional and security requirements
-- **[Architecture](product-spec/one-time-link-architecture.md)** - System design and technology decisions  
-- **[Milestones](product-spec/one-time-link-milestones.md)** - Implementation roadmap with learning objectives
+- **[Requirements](product-spec/secret-letter-requirements.md)** - Complete functional and security requirements
+- **[Architecture](product-spec/secret-letter-architecture.md)** - System design and technology decisions  
+- **[Milestones](product-spec/secret-letter-milestones.md)** - Implementation roadmap with learning objectives
 
 ### API and Contracts
 - **[Public HTTP API](contracts/public-http-api.md)** - Complete API specification for frontend-backend communication
@@ -355,4 +355,4 @@ Copyright (c) 2026 Quorix Việt Nam
 - **Email:** contact@quorix.io.vn
 - **Facebook:** [facebook.com/quorixvietnam](https://facebook.com/quorixvietnam)
 
-This documentation set provides everything needed to understand, implement, deploy, and operate the one-time-link application successfully.
+This documentation set provides everything needed to understand, implement, deploy, and operate the secret-letter application successfully.

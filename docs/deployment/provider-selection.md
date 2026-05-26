@@ -2,7 +2,7 @@
 
 ## 1. Muc tieu cua tai lieu nay
 
-Tai lieu nay giup ban chon ha tang cho `one-time-link` theo cach thuc dung va tiet kiem, khong bi cuon vao viec so sanh VPS theo kieu cam tinh.
+Tai lieu nay giup ban chon ha tang cho `secret-letter` theo cach thuc dung va tiet kiem, khong bi cuon vao viec so sanh VPS theo kieu cam tinh.
 
 Nó duoc viet theo boi canh cu the cua ban:
 
@@ -27,7 +27,7 @@ Khong nen bat dau bang `active-active`.
 
 ### Ly do ky thuat
 
-`one-time-link` co bai toan nhay cam ve:
+`secret-letter` co bai toan nhay cam ve:
 
 - one-time consume
 - TTL

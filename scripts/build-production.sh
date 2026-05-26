@@ -1,5 +1,5 @@
 #!/bin/bash
-# Production build script for one-time-link API
+# Production build script for secret-letter API
 
 set -e
 
@@ -14,7 +14,7 @@ NC='\033[0m' # No Color
 
 # Configuration
 BUILD_DIR="build"
-BINARY_NAME="one-time-link-api"
+BINARY_NAME="secret-letter-api"
 VERSION=$(git describe --tags --always --dirty 2>/dev/null || echo "dev")
 BUILD_TIME=$(date -u '+%Y-%m-%d_%H:%M:%S')
 GO_VERSION=$(go version | awk '{print $3}')

@@ -69,7 +69,7 @@ Milestone 4 adds production-ready features: rate limiting, enhanced error handli
 
 ### Environment Variables (.env)
 ```bash
-SERVICE_NAME=one-time-link-api
+SERVICE_NAME=secret-letter-api
 HOST=0.0.0.0
 PORT=8080
 ALLOWED_ORIGIN=https://your-frontend.com

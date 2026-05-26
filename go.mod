@@ -1,4 +1,4 @@
-module one-time-link
+module secret-letter
 
 go 1.26.3
 

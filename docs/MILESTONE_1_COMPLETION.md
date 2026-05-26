@@ -132,9 +132,9 @@ curl http://localhost:8080/healthz
 
 ### Files Kept in English
 1. `docs/contracts/public-http-api.md` - API contract (technical specification)
-2. `docs/product-spec/one-time-link-requirements.md` - Product requirements (technical)
-3. `docs/product-spec/one-time-link-architecture.md` - Architecture (technical)
-4. `docs/product-spec/one-time-link-milestones.md` - Milestones (technical)
+2. `docs/product-spec/secret-letter-requirements.md` - Product requirements (technical)
+3. `docs/product-spec/secret-letter-architecture.md` - Architecture (technical)
+4. `docs/product-spec/secret-letter-milestones.md` - Milestones (technical)
 5. `docs/deployment/deployment-guide.md` - Deployment guide (technical)
 6. `docs/README.md` - Documentation index (technical)
 

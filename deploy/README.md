@@ -62,7 +62,7 @@ caddy run --config prod/Caddyfile
 
 **Required Variables:**
 ```bash
-APP_SERVICE_NAME=one-time-link-api
+APP_SERVICE_NAME=secret-letter-api
 APP_ENV=production
 APP_HOST=0.0.0.0
 APP_PORT=8080
@@ -121,22 +121,22 @@ For complete deployment instructions, see:
 
 3. **Configure environment:**
    ```bash
-   cp deploy/prod/.env.example /opt/one-time-link/.env
+   cp deploy/prod/.env.example /opt/secret-letter/.env
    # Edit .env with production values
    ```
 
 4. **Deploy binary:**
    ```bash
    # Upload and extract deployment package
-   tar -xzf one-time-link-api-{version}.tar.gz
-   cp one-time-link-api-linux-amd64 /usr/local/bin/
+   tar -xzf secret-letter-api-{version}.tar.gz
+   cp secret-letter-api-linux-amd64 /usr/local/bin/
    ```
 
 5. **Start services:**
    ```bash
    systemctl start redis
    systemctl start caddy
-   systemctl start one-time-link-api
+   systemctl start secret-letter-api
    ```
 
 6. **Verify:**
@@ -207,7 +207,7 @@ redis-cli -a your-password ping
 ### Logs
 ```bash
 # Backend logs
-journalctl -u one-time-link-api -f
+journalctl -u secret-letter-api -f
 
 # Caddy logs
 journalctl -u caddy -f

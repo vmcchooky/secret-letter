@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Stop local development services for one-time-link.
+# Stop local development services for secret-letter.
 # Stops frontend/backend listeners on the default dev ports, then stops local Redis.
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -14,7 +14,7 @@ else
   PORTS=("$@")
 fi
 
-echo "Stopping one-time-link local development services..."
+echo "Stopping secret-letter local development services..."
 
 for port in "${PORTS[@]}"; do
   pids=""

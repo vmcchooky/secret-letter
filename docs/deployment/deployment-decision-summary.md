@@ -19,7 +19,7 @@ No gom lai cac quyet dinh chinh ve:
 - website nay dang build bang Hugo + PaperMod
 - website nay dang deploy tren Vercel
 - domain dang quan ly qua PA Viet Nam
-- `one-time-link` duoc lam de:
+- `secret-letter` duoc lam de:
   - dua vao portfolio
   - xay dung brand ca nhan
   - co san pham that cho recruiter xem
@@ -30,7 +30,7 @@ No gom lai cac quyet dinh chinh ve:
 Phuong an chot hien tai la:
 
 - giu `quorix.io.vn` tren Vercel nhu hien tai
-- deploy frontend `one-time-link` tren Vercel
+- deploy frontend `secret-letter` tren Vercel
 - dung `VPS Viet Nam` lam production primary
 - dung `Oracle Cloud VPS` lam standby va noi hoc them cloud
 - chua deploy microservices thanh nhieu may rieng
@@ -39,7 +39,7 @@ Phuong an chot hien tai la:
 ## 4. Domain va vai tro
 
 - `quorix.io.vn`: website ca nhan
-- `secret.quorix.io.vn`: frontend one-time-link
+- `secret.quorix.io.vn`: frontend secret-letter
 - `api.secret.quorix.io.vn`: backend API
 
 ## 5. Ha tang chot
@@ -103,7 +103,7 @@ Phuong an chot hien tai la:
 
 ### Ly do
 
-Voi bai toan one-time-link, active-active som se lam tang do phuc tap o:
+Voi bai toan secret-letter, active-active som se lam tang do phuc tap o:
 
 - consume 1 lan
 - TTL
@@ -122,7 +122,7 @@ Trong khi do, `primary + standby` da du de:
 
 - website ca nhan: giu nguyen
 - domain: giu nguyen
-- frontend one-time-link tren Vercel: co the `0 USD`
+- frontend secret-letter tren Vercel: co the `0 USD`
 
 ### Chi phi tang them chinh
 
@@ -189,9 +189,9 @@ Ban deploy duoc xem la thanh cong khi:
 
 Neu muon theo doi de dang, doc theo thu tu nay:
 
-1. `docs/product-spec/one-time-link-requirements.md`
-2. `docs/product-spec/one-time-link-architecture.md`
-3. `docs/product-spec/one-time-link-milestones.md`
+1. `docs/product-spec/secret-letter-requirements.md`
+2. `docs/product-spec/secret-letter-architecture.md`
+3. `docs/product-spec/secret-letter-milestones.md`
 4. `docs/deployment/deployment-decision-summary.md`
 5. `docs/deployment/quorix-cheap-deployment-plan.md`
 6. `docs/deployment/production-checklist.md`
@@ -202,4 +202,4 @@ Neu muon theo doi de dang, doc theo thu tu nay:
 
 Neu chi can mot cau de nho:
 
-`one-time-link` se duoc deploy voi frontend tren Vercel, backend Go + Redis tren 1 VPS Viet Nam lam primary, Oracle Cloud lam standby, va failover bang tay qua DNS.
+`secret-letter` se duoc deploy voi frontend tren Vercel, backend Go + Redis tren 1 VPS Viet Nam lam primary, Oracle Cloud lam standby, va failover bang tay qua DNS.

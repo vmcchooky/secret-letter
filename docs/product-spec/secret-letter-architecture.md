@@ -1,4 +1,4 @@
-# One-Time Link Architecture
+# Secret Letter Architecture
 
 ## 1. Architecture Philosophy
 

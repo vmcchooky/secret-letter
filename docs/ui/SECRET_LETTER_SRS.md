@@ -1,7 +1,7 @@
-# SRS — one-time-link / Secret Letter
+# SRS — secret-letter / Secret Letter
 
 **Version:** 1.1  
-**Project name:** one-time-link / Secret Letter  
+**Project name:** secret-letter / Secret Letter  
 **Owner:** Quorix Việt Nam  
 **Document type:** Software Requirements Specification  
 **Primary goal:** Cho phép người dùng tạo và chia sẻ một nội dung bí mật qua đường link dùng một lần, với trải nghiệm đọc thư dạng phong thư điện ảnh: mở thư, đọc nội dung, đóng lại, phong thư bốc cháy và biến mất.
@@ -12,7 +12,7 @@
 
 ### 1.1. Mục tiêu chính
 
-Dự án **one-time-link / Secret Letter** là một ứng dụng web cho phép người dùng gửi nội dung nhạy cảm hoặc riêng tư thông qua một đường link chỉ có thể mở một lần.
+Dự án **secret-letter / Secret Letter** là một ứng dụng web cho phép người dùng gửi nội dung nhạy cảm hoặc riêng tư thông qua một đường link chỉ có thể mở một lần.
 
 Điểm khác biệt của dự án không chỉ nằm ở tính năng “one-time secret”, mà còn ở trải nghiệm thị giác: người nhận mở link sẽ thấy một phong thư bí mật, nhấn vào để mở, đọc nội dung bên trong, sau đó đóng lại để phong thư và lá thư tự bốc cháy rồi biến mất.
 

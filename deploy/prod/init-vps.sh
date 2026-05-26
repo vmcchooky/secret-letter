@@ -3,7 +3,7 @@
 # ==============================================================================
 # VPS Initialization & Security Setup Script
 # Target OS: Ubuntu Server 22.04 LTS / 24.04 LTS
-# Project: one-time-link (Milestone 5 Production Deployment)
+# Project: secret-letter (Milestone 5 Production Deployment)
 # ==============================================================================
 
 # Exit immediately if a command exits with a non-zero status
@@ -16,7 +16,7 @@ RED='\033[0;31m'
 NC='\033[0m' # No Color
 
 echo -e "${YELLOW}======================================================================${NC}"
-echo -e "${GREEN}    STARTING ONE-TIME-LINK VPS INITIALIZATION & SECURITY SETUP        ${NC}"
+echo -e "${GREEN}    STARTING SECRET-LETTER VPS INITIALIZATION & SECURITY SETUP        ${NC}"
 echo -e "${YELLOW}======================================================================${NC}"
 
 # Check if script is run as root

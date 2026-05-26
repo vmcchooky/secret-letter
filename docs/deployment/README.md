@@ -1,6 +1,6 @@
 # Deployment Documentation
 
-Tài liệu deployment cho one-time-link application.
+Tài liệu deployment cho secret-letter application.
 
 ## Current Status
 
@@ -11,7 +11,7 @@ Tài liệu deployment cho one-time-link application.
 ## Documents
 
 - **`deployment-decision-summary.md`** - Tóm tắt các quyết định deployment quan trọng nhất
-- **`quorix-cheap-deployment-plan.md`** - Phân tích phương án deploy siêu rẻ cho `quorix.io.vn` và `one-time-link`
+- **`quorix-cheap-deployment-plan.md`** - Phân tích phương án deploy siêu rẻ cho `quorix.io.vn` và `secret-letter`
 - **`production-checklist.md`** - Checklist từng bước để đưa phương án deploy siêu rẻ lên production
 - **`provider-selection.md`** - Hướng dẫn chọn provider, gồm cả mô hình `VPS Việt Nam + Oracle Cloud standby`
 - **failover-runbook.md`** - Runbook failover bằng tay từ `VPS Việt Nam` sang `Oracle Cloud`

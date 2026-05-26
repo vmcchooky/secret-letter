@@ -10,8 +10,8 @@ import (
 	"testing"
 	"time"
 
-	"one-time-link/backend/internal/config"
-	"one-time-link/backend/internal/secret"
+	"secret-letter/backend/internal/config"
+	"secret-letter/backend/internal/secret"
 
 	"github.com/redis/go-redis/v9"
 )

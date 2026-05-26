@@ -9,8 +9,8 @@ import (
 	"strings"
 	"testing"
 
-	"one-time-link/backend/internal/config"
-	"one-time-link/backend/internal/secret"
+	"secret-letter/backend/internal/config"
+	"secret-letter/backend/internal/secret"
 )
 
 func TestGetSecretStatusEndpoint(t *testing.T) {

@@ -1,8 +1,8 @@
-# One-Time Link Requirements
+# Secret Letter Requirements
 
 ## 1. Product Summary
 
-`one-time-link` is a web application for sharing secrets through links that can be revealed only once.
+`secret-letter` is a web application for sharing secrets through links that can be revealed only once.
 
 The MVP allows a sender to:
 - Enter a text secret (up to 10KB)
@@ -108,7 +108,7 @@ The system shall encrypt secrets in the browser before transmission.
 - Encode ciphertext and nonce as Base64 for transmission
 - Store decryption key in URL fragment only
 
-### FR-2 Shareable One-Time Link Generation
+### FR-2 Shareable Secret Letter Generation
 
 The frontend shall generate URLs with server identifier and client-only key.
 

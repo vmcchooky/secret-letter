@@ -1,5 +1,5 @@
 #!/usr/bin/env pwsh
-# Production build script for one-time-link API
+# Production build script for secret-letter API
 
 $ErrorActionPreference = "Stop"
 
@@ -8,7 +8,7 @@ Write-Host ""
 
 # Configuration
 $BUILD_DIR = "build"
-$BINARY_NAME = "one-time-link-api"
+$BINARY_NAME = "secret-letter-api"
 $VERSION = (git describe --tags --always --dirty 2>$null) ?? "dev"
 $BUILD_TIME = (Get-Date).ToUniversalTime().ToString("yyyy-MM-dd_HH:mm:ss")
 $GO_VERSION = (go version).Split()[2]

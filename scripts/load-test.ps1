@@ -1,5 +1,5 @@
 #!/usr/bin/env pwsh
-# Load testing script for one-time-link API
+# Load testing script for secret-letter API
 
 param(
     [int]$Concurrent = 10,

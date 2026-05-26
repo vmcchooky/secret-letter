@@ -56,7 +56,7 @@ Why:
 - these values cover the most common real-world secret sharing cases
 - free-form TTL input can be added later when the product or library mode becomes more configurable
 
-## 4. One-Time Link Semantics
+## 4. Secret Letter Semantics
 
 Public links always burn after read. `burnAfterRead` may be omitted or set to `true` in create requests; `false` is rejected by the API.
 

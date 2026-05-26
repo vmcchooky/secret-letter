@@ -2,7 +2,7 @@
 
 ## Context
 
-Mình đang triển khai dự án `one-time-link` trên một VPS đã có sẵn.
+Mình đang triển khai dự án `secret-letter` trên một VPS đã có sẵn.
 
 Thông tin hiện tại:
 
@@ -43,7 +43,7 @@ Các file liên quan đã có sẵn trong repo:
 
 ## Prompt gợi ý để đưa cho Gemini
 
-> Mình đang có một VPS và domain `quorix.io.vn` đã mua tại PA Việt Nam. Hiện chưa tạo subdomain nào cho dự án `one-time-link`. Trong repo đã có các file deployment như `deploy/prod/init-vps.sh`, `deploy/prod/docker-compose.yml`, `deploy/prod/Caddyfile`, và `deploy/prod/.env.example`.  
+> Mình đang có một VPS và domain `quorix.io.vn` đã mua tại PA Việt Nam. Hiện chưa tạo subdomain nào cho dự án `secret-letter`. Trong repo đã có các file deployment như `deploy/prod/init-vps.sh`, `deploy/prod/docker-compose.yml`, `deploy/prod/Caddyfile`, và `deploy/prod/.env.example`.  
 >  
 > Hãy đóng vai DevOps guide và hướng dẫn mình từng bước để hoàn tất setup production ban đầu: đề xuất subdomain phù hợp, hướng dẫn tạo DNS records ở PA Việt Nam, hardening VPS, cài Docker/Caddy/Redis nếu cần, cấu hình environment variables, reverse proxy, SSL, và kiểm tra deploy.  
 >  

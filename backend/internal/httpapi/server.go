@@ -11,9 +11,9 @@ import (
 	"strings"
 	"time"
 
-	"one-time-link/backend/internal/config"
-	"one-time-link/backend/internal/ratelimit"
-	"one-time-link/backend/internal/secret"
+	"secret-letter/backend/internal/config"
+	"secret-letter/backend/internal/ratelimit"
+	"secret-letter/backend/internal/secret"
 
 	"github.com/google/uuid"
 	"github.com/redis/go-redis/v9"

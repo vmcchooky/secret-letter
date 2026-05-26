@@ -328,10 +328,10 @@ go test ./test
 3. **Deploy:**
    ```bash
    # Extract deployment package
-   tar -xzf build/one-time-link-api-{version}.tar.gz
+   tar -xzf build/secret-letter-api-{version}.tar.gz
    
    # Run the binary
-   ./one-time-link-api-linux-amd64
+   ./secret-letter-api-linux-amd64
    ```
 
 4. **Verify:**
@@ -354,7 +354,7 @@ curl http://localhost:8080/healthz
 **Response:**
 ```json
 {
-  "service": "one-time-link-api",
+  "service": "secret-letter-api",
   "status": "healthy",
   "timestamp": "2026-04-16T12:00:00Z",
   "version": "1.0.0"
@@ -432,7 +432,7 @@ Milestone 4 successfully delivers a production-ready API with:
 - ✅ **Performance**: Caching, metrics, optimized middleware, load testing
 - ✅ **Operations**: Logging, monitoring, deployment tools, documentation
 
-The one-time-link API is now ready for production deployment! 🚀
+The secret-letter API is now ready for production deployment! 🚀
 
 ---
 

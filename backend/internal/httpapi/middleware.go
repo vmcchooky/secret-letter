@@ -9,7 +9,7 @@ import (
 	"strings"
 	"time"
 
-	"one-time-link/backend/internal/ratelimit"
+	"secret-letter/backend/internal/ratelimit"
 )
 
 // EndpointConfig defines rate limit configuration for specific endpoints

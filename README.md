@@ -1,6 +1,6 @@
-# one-time-link
+# secret-letter
 
-`one-time-link` là ứng dụng chia sẻ secret một lần, được thiết kế ưu tiên cho mục đích portfolio với khả năng nâng cấp lên production sau này.
+`secret-letter` là ứng dụng chia sẻ secret một lần, được thiết kế ưu tiên cho mục đích chia sẻ các dữ liệu nhạy cảm như password, token,... một cách an toàn.
 
 ## Trọng Tâm Hiện Tại
 
@@ -81,9 +81,9 @@ Frontend sẽ chạy tại `http://localhost:5173` theo mặc định.
 
 ### Product Documentation
 - [docs/README.md](docs/README.md) - Tổng quan tài liệu
-- [docs/product-spec/one-time-link-requirements.md](docs/product-spec/one-time-link-requirements.md) - Yêu cầu sản phẩm
-- [docs/product-spec/one-time-link-architecture.md](docs/product-spec/one-time-link-architecture.md) - Kiến trúc hệ thống
-- [docs/product-spec/one-time-link-milestones.md](docs/product-spec/one-time-link-milestones.md) - Lộ trình phát triển
+- [docs/product-spec/secret-letter-requirements.md](docs/product-spec/secret-letter-requirements.md) - Yêu cầu sản phẩm
+- [docs/product-spec/secret-letter-architecture.md](docs/product-spec/secret-letter-architecture.md) - Kiến trúc hệ thống
+- [docs/product-spec/secret-letter-milestones.md](docs/product-spec/secret-letter-milestones.md) - Lộ trình phát triển
 
 ### Development Documentation
 - [DEVELOPMENT.md](DEVELOPMENT.md) - Hướng dẫn phát triển chi tiết
@@ -364,7 +364,7 @@ The frontend intentionally has no local `file:` dependency such as `@quorix/ui`,
 ## Project Structure
 
 ```
-one-time-link/
+secret-letter/
 ├── backend/
 │   ├── cmd/api/              # Application entry point
 │   ├── internal/
@@ -394,7 +394,7 @@ one-time-link/
 ### Backend (.env)
 
 ```bash
-APP_SERVICE_NAME=one-time-link-api
+APP_SERVICE_NAME=secret-letter-api
 APP_ENV=development
 APP_HOST=0.0.0.0
 APP_PORT=8080

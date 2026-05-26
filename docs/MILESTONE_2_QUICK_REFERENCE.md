@@ -104,7 +104,7 @@ GET secret:{secretId}
 ### Backend Environment Variables
 
 ```bash
-APP_SERVICE_NAME=one-time-link-api
+APP_SERVICE_NAME=secret-letter-api
 APP_HOST=0.0.0.0
 APP_PORT=8080
 ALLOWED_ORIGIN=http://localhost:5173
