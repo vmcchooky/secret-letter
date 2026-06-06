@@ -13,14 +13,14 @@ The target architecture defines clear service boundaries for future microservice
 ## 2. Technology Stack
 
 ### Frontend
-- **Framework**: React 18 with TypeScript
+- **Framework**: React 19 with TypeScript
 - **Build Tool**: Vite for fast development and optimized builds
 - **Crypto**: Web Crypto API for AES-GCM encryption
 - **Deployment**: Vercel (leveraging existing `quorix.io.vn` setup)
 
 ### Backend
-- **Language**: Go 1.21+
-- **HTTP**: Standard `net/http` with `chi` router for middleware
+- **Language**: Go 1.26+
+- **HTTP**: Standard `net/http` with package-level middleware
 - **Architecture**: Single binary with internal service boundaries
 - **Deployment**: Single VPS with systemd service management
 

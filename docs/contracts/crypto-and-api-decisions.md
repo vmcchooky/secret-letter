@@ -214,7 +214,22 @@ Why:
 - it does not leak unnecessary implementation detail
 - it avoids telling users the key is wrong when the API or network is the real problem
 
-## 12. Milestone 2 Boundary
+## 12. Share Flow Safety
+
+Client-side share helpers must not embed a full secret link, including its `#fragment` key, inside third-party share URLs or analytics URLs.
+
+Safe options include:
+
+- manual copy of the full link for the sender to paste deliberately
+- copying the public URL and fragment key separately when the sender wants to split channels
+
+Why:
+
+- the URL fragment is never sent to the Secret Letter backend
+- wrapping the full link inside a third-party share URL turns the fragment into request data for that third party
+- that would break the zero-knowledge expectation of the product
+
+## 13. Milestone 2 Boundary
 
 Milestone 2 should implement:
 
@@ -232,7 +247,7 @@ Milestone 2 should not yet implement:
 - multiple algorithm support
 - production-grade failover logic in code
 
-## 13. Change Policy
+## 14. Change Policy
 
 If any of these decisions change later:
 

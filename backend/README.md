@@ -52,7 +52,7 @@ Single Go binary với clean service boundaries:
 ## Run Locally
 
 ### Prerequisites
-- Go 1.21+
+- Go 1.26+
 - Redis running (port 6379)
 
 ### Start Backend

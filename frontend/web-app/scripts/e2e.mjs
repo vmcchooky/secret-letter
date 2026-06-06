@@ -8,6 +8,7 @@ import { chromium } from "playwright-core";
 const scriptDir = path.dirname(fileURLToPath(import.meta.url));
 const appDir = path.resolve(scriptDir, "..");
 const repoRoot = path.resolve(appDir, "..", "..");
+const localRedisComposeFile = path.join(repoRoot, "deploy", "local", "docker-compose.yml");
 const npmCommand = process.platform === "win32" ? "npm.cmd" : "npm";
 const previewHost = "127.0.0.1";
 const previewStartPort = Number(process.env.E2E_PREVIEW_PORT || 4183);
@@ -125,6 +126,50 @@ async function findFreePort(startPort) {
   throw new Error(`Could not find a free port starting at ${startPort}.`);
 }
 
+function parseHostAndPort(address, defaultPort) {
+  const trimmed = address.trim();
+  const lastColon = trimmed.lastIndexOf(":");
+  if (lastColon === -1) {
+    return {
+      host: trimmed,
+      port: defaultPort,
+    };
+  }
+
+  return {
+    host: trimmed.slice(0, lastColon),
+    port: Number(trimmed.slice(lastColon + 1)) || defaultPort,
+  };
+}
+
+async function waitForTcp(host, port, timeoutMs = 30_000) {
+  const started = Date.now();
+
+  while (Date.now() - started < timeoutMs) {
+    const connected = await new Promise((resolve) => {
+      const socket = net.createConnection({ host, port });
+
+      socket.once("connect", () => {
+        socket.end();
+        resolve(true);
+      });
+      socket.once("error", () => {
+        socket.destroy();
+        resolve(false);
+      });
+    });
+
+    if (connected) {
+      return;
+    }
+
+    // eslint-disable-next-line no-await-in-loop
+    await new Promise((resolve) => setTimeout(resolve, 250));
+  }
+
+  throw new Error(`TCP service did not become ready at ${host}:${port} within ${timeoutMs}ms.`);
+}
+
 async function waitForServer(url, timeoutMs = 30_000) {
   const started = Date.now();
   while (Date.now() - started < timeoutMs) {
@@ -152,6 +197,39 @@ function resolveBrowserExecutablePath() {
   }
 
   return undefined;
+}
+
+async function ensureRedisReady() {
+  const { host, port } = parseHostAndPort(redisAddr, 6379);
+
+  try {
+    await waitForTcp(host, port, 1_500);
+    return { startedByScript: false };
+  } catch {
+    if (process.env.E2E_REDIS_ADDR) {
+      throw new Error(
+        `Redis is not reachable at ${redisAddr}. Start it first or point E2E_REDIS_ADDR to a running instance.`,
+      );
+    }
+  }
+
+  log("Starting local Redis for e2e...");
+  await runCommand("docker", ["compose", "-f", localRedisComposeFile, "up", "-d", "redis"], {
+    cwd: repoRoot,
+  });
+  await waitForTcp(host, port);
+
+  return { startedByScript: true };
+}
+
+async function stopManagedRedis(redisState) {
+  if (!redisState?.startedByScript) {
+    return;
+  }
+
+  await runCommand("docker", ["compose", "-f", localRedisComposeFile, "down"], {
+    cwd: repoRoot,
+  });
 }
 
 async function startBackend(port, allowedOrigin) {
@@ -229,8 +307,10 @@ async function run() {
   let backendProcess;
   let previewProcess;
   let browser;
+  let redisState;
 
   try {
+    redisState = await ensureRedisReady();
     await buildFrontend(backendBaseUrl);
     backendProcess = await startBackend(backendPort, previewBaseUrl);
     previewProcess = await startPreview(previewPort, backendBaseUrl);
@@ -324,6 +404,9 @@ async function run() {
 
     stopCommand(previewProcess?.child);
     stopCommand(backendProcess?.child);
+    await stopManagedRedis(redisState).catch((error) => {
+      console.error(error instanceof Error ? error.stack ?? error.message : String(error));
+    });
   }
 }
 

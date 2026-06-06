@@ -194,8 +194,8 @@ func (s *Server) getEndpointConfig(r *http.Request) (string, *EndpointConfig) {
 		return "create_secret", s.rateLimitConfig(s.config.CreateLimit, CreateSecretLimit)
 	}
 
-	// POST /api/secrets/{id}/consume - Consume secret
-	if strings.HasPrefix(path, "/api/secrets/") && strings.HasSuffix(path, "/consume") && method == http.MethodPost {
+	// POST /api/secrets/{id}/open or /consume - Consume secret
+	if isSecretOpenPath(path, method) {
 		return "consume_secret", s.rateLimitConfig(s.config.ConsumeLimit, ConsumeSecretLimit)
 	}
 
@@ -227,6 +227,14 @@ func (s *Server) rateLimitConfig(limit int, fallback EndpointConfig) *EndpointCo
 		Limit:  limit,
 		Window: window,
 	}
+}
+
+func isSecretOpenPath(path, method string) bool {
+	if method != http.MethodPost || !strings.HasPrefix(path, "/api/secrets/") {
+		return false
+	}
+
+	return strings.HasSuffix(path, "/open") || strings.HasSuffix(path, "/consume")
 }
 
 // getClientIP extracts the client IP address from the request.

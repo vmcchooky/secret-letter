@@ -8,6 +8,7 @@ import {
   encodeBase64Url,
   exportKeyToBase64Url,
 } from "../lib/crypto";
+import { splitSecretLink } from "../lib/secretLink";
 import { clampUtf8Text } from "../lib/utf8";
 import { useTactilePress } from "../hooks/useTactilePress";
 
@@ -27,6 +28,7 @@ export function CreateSecretForm() {
   const [error, setError] = useState("");
   const [secretLink, setSecretLink] = useState("");
   const [copyStatus, setCopyStatus] = useState("");
+  const [shareFeedback, setShareFeedback] = useState("");
   const [showQr, setShowQr] = useState(false);
   const [showShareMenu, setShowShareMenu] = useState(false);
   const [isFormExiting, setIsFormExiting] = useState(false);
@@ -38,6 +40,7 @@ export function CreateSecretForm() {
   const resultTransitionTimerRef = useRef<number | null>(null);
   const qrPresence = useDelayedPresence(showQr, 180);
   const sharePresence = useDelayedPresence(showShareMenu, 180);
+  const secretLinkParts = splitSecretLink(secretLink);
 
   useEffect(() => {
     if (!secretLink || !showQr || !qrPresence.shouldRender || !qrCanvasRef.current) {
@@ -156,36 +159,50 @@ export function CreateSecretForm() {
     }
   };
 
-  const copyToClipboard = async () => {
+  const setTransientShareFeedback = (message: string) => {
+    setShareFeedback(message);
+    window.setTimeout(() => setShareFeedback(""), 2200);
+  };
+
+  const copyToClipboard = async (shareMessage?: string) => {
     try {
       await navigator.clipboard.writeText(secretLink);
       setCopyStatus("copied");
+      if (shareMessage) {
+        setTransientShareFeedback(shareMessage);
+      }
       setTimeout(() => setCopyStatus(""), 1500);
     } catch (err) {
       setCopyStatus("error");
+      if (shareMessage) {
+        setTransientShareFeedback("Không thể sao chép liên kết này.");
+      }
       setTimeout(() => setCopyStatus(""), 2000);
     }
   };
 
-  const shareSecretLink = async () => {
-    // If native share is supported, try it first for a better mobile experience
-    if (navigator.share) {
-      try {
-        await navigator.share({
-          title: "Secret Letter",
-          text: "Mật thư bảo mật dành cho bạn",
-          url: secretLink,
-        });
-        return;
-      } catch (err) {
-        // If aborted or failed, fallback to our custom modal
-        if (err instanceof Error && err.name !== "AbortError") {
-          setShowShareMenu(true);
-        }
-      }
-    } else {
-      setShowShareMenu(true);
+  const copySharePart = async (value: string, successMessage: string) => {
+    if (!value) {
+      setTransientShareFeedback("Thiếu dữ liệu chia sẻ để sao chép.");
+      return;
     }
+
+    try {
+      await navigator.clipboard.writeText(value);
+      setTransientShareFeedback(successMessage);
+    } catch {
+      setTransientShareFeedback("Không thể sao chép mục chia sẻ này.");
+    }
+  };
+
+  const closeShareMenu = () => {
+    setShowShareMenu(false);
+    setShareFeedback("");
+  };
+
+  const openShareMenu = () => {
+    setShareFeedback("");
+    setShowShareMenu(true);
   };
 
   const qrPressTimerRef = useRef<number | null>(null);
@@ -246,7 +263,7 @@ export function CreateSecretForm() {
       setPlaintextBytes(0);
       setCopyStatus("");
       setShowQr(false);
-      setShowShareMenu(false);
+      closeShareMenu();
       setIsResultExiting(false);
     }, 160);
   };
@@ -386,7 +403,7 @@ export function CreateSecretForm() {
             {...linkTokenPress.pressProps}
             className={`secret-link-box parchment-token ${linkTokenPress.isPressing ? "is-pressing" : ""}`}
             data-pressed={linkTokenPress.isPressing ? "true" : undefined}
-            onClick={copyToClipboard}
+            onClick={() => { void copyToClipboard(); }}
             onKeyDown={copySecretLinkFromKeyboard}
             onContextMenu={blockDecorativeContextMenu}
             title="Nhấn để sao chép liên kết"
@@ -418,7 +435,7 @@ export function CreateSecretForm() {
           </div>
 
           <div className="success-action-group">
-            <TactileButton className="minimal-icon-action" onClick={copyToClipboard} title={copyStatus === "copied" ? "Đã sao chép" : "Sao chép"}>
+            <TactileButton className="minimal-icon-action" onClick={() => { void copyToClipboard(); }} title={copyStatus === "copied" ? "Đã sao chép" : "Sao chép"}>
               <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                 {copyStatus === "copied" ? (
                   <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
@@ -427,7 +444,7 @@ export function CreateSecretForm() {
                 )}
               </svg>
             </TactileButton>
-            <TactileButton className="minimal-icon-action" onClick={shareSecretLink} title="Chia sẻ">
+            <TactileButton className="minimal-icon-action" onClick={openShareMenu} title="Chia sẻ an toàn">
               <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
               </svg>
@@ -466,76 +483,48 @@ export function CreateSecretForm() {
           {sharePresence.shouldRender && (
             <div
               className={`otl-modal-overlay ${sharePresence.isExiting ? "is-exiting" : ""}`}
-              onClick={() => setShowShareMenu(false)}
+              onClick={closeShareMenu}
               onContextMenu={blockDecorativeContextMenu}
             >
               <div className="otl-modal-card share-card" onClick={(e) => e.stopPropagation()} onContextMenu={blockDecorativeContextMenu}>
-                <h3 style={{ fontFamily: "var(--qx-font-ui, Inter, sans-serif)", fontStyle: "normal", fontWeight: 600, fontSize: "1.25rem" }}>Chia sẻ liên kết</h3>
+                <h3 style={{ fontFamily: "var(--qx-font-ui, Inter, sans-serif)", fontStyle: "normal", fontWeight: 600, fontSize: "1.25rem" }}>Chia sẻ an toàn</h3>
+                <p style={{ margin: "0 0 1rem", color: "var(--otl-muted)", lineHeight: 1.5 }}>
+                  Ứng dụng không gửi trực tiếp liên kết chứa khóa giải mã tới Telegram, Zalo,
+                  email hay trình chia sẻ tích hợp. Hãy sao chép thủ công toàn bộ liên kết,
+                  hoặc gửi URL và khóa ở hai kênh riêng nếu bạn cần giảm rủi ro lộ khóa.
+                </p>
                 <div className="otl-share-grid">
-                  <TactileButton className="otl-share-item-btn" onClick={() => { copyToClipboard(); setShowShareMenu(false); }}>
+                  <TactileButton className="otl-share-item-btn" onClick={() => { void copyToClipboard("Đã sao chép liên kết đầy đủ."); }}>
                     <div className="share-icon-circle bg-gold-gradient">
                       <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                         <path strokeLinecap="round" strokeLinejoin="round" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
                       </svg>
                     </div>
-                    <span>Sao chép</span>
+                    <span>Link đầy đủ</span>
                   </TactileButton>
-                  <a className="otl-share-item-btn" href={`https://t.me/share/url?url=${encodeURIComponent(secretLink)}&text=${encodeURIComponent("Secret Letter - One-time Link")}`} target="_blank" rel="noopener noreferrer">
+                  <TactileButton className="otl-share-item-btn" onClick={() => { void copySharePart(secretLinkParts.publicUrl, "Đã sao chép URL không kèm khóa."); }}>
                     <div className="share-icon-circle bg-telegram-gradient">
-                      <svg width="18" height="18" fill="currentColor" viewBox="0 0 24 24">
-                        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.8c-.15 1.58-.8 5.42-1.13 7.19-.14.75-.42 1-.68 1.03-.58.05-1.02-.38-1.58-.75-.88-.58-1.38-.94-2.23-1.5-.99-.65-.35-1.01.22-1.59.15-.15 2.71-2.48 2.76-2.69.01-.03.01-.14-.07-.2-.08-.06-.19-.04-.27-.02-.12.02-1.96 1.24-5.54 3.65-.52.36-.97.53-1.34.52-.41-.01-1.21-.23-1.8-.42-.72-.24-1.29-.37-1.24-.77.03-.21.32-.42.88-.63 3.44-1.5 5.74-2.49 6.89-2.96 3.28-1.34 3.96-1.57 4.41-1.57.1 0 .32.02.46.14.12.1.15.24.17.33.01.07.02.2.01.31z"/>
+                      <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M4 12h16M13 5l7 7-7 7" />
                       </svg>
                     </div>
-                    <span>Telegram</span>
-                  </a>
-                  <a className="otl-share-item-btn" href={`https://zalo.me/share?url=${encodeURIComponent(secretLink)}`} target="_blank" rel="noopener noreferrer">
+                    <span>Chỉ URL</span>
+                  </TactileButton>
+                  <TactileButton className="otl-share-item-btn" onClick={() => { void copySharePart(secretLinkParts.fragmentKey, "Đã sao chép khóa giải mã."); }}>
                     <div className="share-icon-circle bg-zalo-gradient">
-                      <span className="share-zalo-text">Z</span>
-                    </div>
-                    <span>Zalo</span>
-                  </a>
-                  <a className="otl-share-item-btn" href={`mailto:?subject=${encodeURIComponent("Mật thư bảo mật")}&body=${encodeURIComponent("Liên kết mật thư của bạn: " + secretLink)}`}>
-                    <div className="share-icon-circle bg-email-gradient">
                       <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M7 10V7a5 5 0 1110 0v3m-8 0h6m-6 0a2 2 0 00-2 2v5a2 2 0 002 2h6a2 2 0 002-2v-5a2 2 0 00-2-2m-6 0V9a3 3 0 116 0v1" />
                       </svg>
                     </div>
-                    <span>Email</span>
-                  </a>
-                  <a className="otl-share-item-btn" href={`fb-messenger://share?link=${encodeURIComponent(secretLink)}`} target="_blank" rel="noopener noreferrer">
-                    <div className="share-icon-circle bg-messenger-gradient">
-                      <svg width="18" height="18" fill="currentColor" viewBox="0 0 24 24">
-                        <path d="M12 2C6.36 2 1.8 6.13 1.8 11.22c0 2.91 1.53 5.48 3.89 7.15v3.42l3.55-1.95c.87.24 1.79.37 2.76.37 5.64 0 10.2-4.13 10.2-9.22S17.64 2 12 2zm1.09 12.38-2.77-2.95-5.4 2.95 5.92-6.28 2.87 2.95 5.3-2.96-5.92 6.29z"/>
-                      </svg>
-                    </div>
-                    <span>Messenger</span>
-                  </a>
-                  <a className="otl-share-item-btn" href={`sms:?&body=${encodeURIComponent("Mật thư bảo mật: " + secretLink)}`}>
-                    <div className="share-icon-circle bg-sms-gradient">
-                      <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
-                      </svg>
-                    </div>
-                    <span>SMS</span>
-                  </a>
-                  {typeof navigator !== "undefined" && !!navigator.share && (
-                    <TactileButton className="otl-share-item-btn" onClick={() => {
-                      navigator.share({
-                        title: "Secret Letter",
-                        text: "Mật thư bảo mật dành cho bạn",
-                        url: secretLink,
-                      }).catch(() => {});
-                    }}>
-                      <div className="share-icon-circle" style={{ background: "linear-gradient(135deg, #a18cd1 0%, #fbc2eb 100%)", color: "white" }}>
-                        <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
-                        </svg>
-                      </div>
-                      <span>Khác...</span>
-                    </TactileButton>
-                  )}
+                    <span>Chỉ khóa</span>
+                  </TactileButton>
                 </div>
-                <TactileButton className="otl-modal-close-btn" onClick={() => setShowShareMenu(false)}>Đóng</TactileButton>
+                {shareFeedback && (
+                  <p role="status" style={{ margin: "1rem 0 0", color: "var(--otl-muted)", lineHeight: 1.5 }}>
+                    {shareFeedback}
+                  </p>
+                )}
+                <TactileButton className="otl-modal-close-btn" onClick={closeShareMenu}>Đóng</TactileButton>
               </div>
             </div>
           )}

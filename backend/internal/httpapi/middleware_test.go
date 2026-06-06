@@ -201,6 +201,43 @@ func TestRateLimitingMiddleware(t *testing.T) {
 		}
 	})
 
+	t.Run("open endpoint shares the consume bucket", func(t *testing.T) {
+		testIP := "192.168.2.25"
+
+		originalLimit := server.config.ConsumeLimit
+		server.config.ConsumeLimit = 2
+		defer func() { server.config.ConsumeLimit = originalLimit }()
+
+		limiter := ratelimit.NewLimiter(redisClient)
+		limiter.Reset(ctx, fmt.Sprintf("consume_secret:%s", testIP))
+		defer limiter.Reset(ctx, fmt.Sprintf("consume_secret:%s", testIP))
+
+		for _, path := range []string{
+			"/api/secrets/test123/open",
+			"/api/secrets/test123/consume",
+		} {
+			req := httptest.NewRequest(http.MethodPost, path, nil)
+			req.RemoteAddr = testIP + ":12345"
+
+			w := httptest.NewRecorder()
+			handler.ServeHTTP(w, req)
+
+			if w.Code == http.StatusTooManyRequests {
+				t.Fatalf("%s should not be rate limited yet", path)
+			}
+		}
+
+		req := httptest.NewRequest(http.MethodPost, "/api/secrets/test123/open", nil)
+		req.RemoteAddr = testIP + ":12345"
+
+		w := httptest.NewRecorder()
+		handler.ServeHTTP(w, req)
+
+		if w.Code != http.StatusTooManyRequests {
+			t.Fatalf("expected /open to be rate limited after shared consume bucket is exhausted, got %d", w.Code)
+		}
+	})
+
 	t.Run("different IPs are tracked independently", func(t *testing.T) {
 		ip1 := "192.168.1.103"
 		ip2 := "192.168.1.104"
