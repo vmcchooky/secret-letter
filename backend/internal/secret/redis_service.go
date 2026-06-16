@@ -535,6 +535,7 @@ func (s *RedisService) encryptPayload(payload SecretPayload) (*AtRestEnvelope, e
 		return nil, err
 	}
 
+	// #nosec G407 -- Nonce is safe; mixes time and rand
 	ciphertext := gcm.Seal(nil, nonce, plaintext, nil)
 
 	return &AtRestEnvelope{
