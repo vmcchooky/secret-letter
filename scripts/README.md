@@ -132,10 +132,12 @@ Script để verify trusted proxy boundary trên production/shared edge bằng c
 Production smoke test sau deploy/restart. Script này:
 1. check `healthz` + `readyz`
 2. create secret
-3. restart API
-4. wait `readyz` recover
-5. reveal secret cũ để verify `SECRET_ENCRYPTION_KEY` vẫn ổn
-6. gửi oversized request qua edge và expect `413`
+3. verify status `active` và `X-RateLimit-*` headers
+4. restart API
+5. wait `readyz` recover
+6. reveal secret cũ để verify `SECRET_ENCRYPTION_KEY` vẫn ổn
+7. thử consume lần hai và expect `410 SECRET_CONSUMED`
+8. gửi oversized request qua edge và expect `413`
 
 **Bash (Linux/Mac):**
 ```bash

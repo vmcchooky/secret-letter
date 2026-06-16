@@ -46,14 +46,14 @@ Write-Host "API_BASE_URL: $ApiBaseUrl"
 Write-Host "EDGE_API_URL: $EdgeApiUrl"
 Write-Host ""
 
-Write-Host "[1/7] Checking local health and readiness endpoints..." -ForegroundColor Yellow
+Write-Host "[1/8] Checking local health and readiness endpoints..." -ForegroundColor Yellow
 $healthStatus = Get-StatusCode -Url "$ApiBaseUrl/healthz"
 $readyStatus = Get-StatusCode -Url "$ApiBaseUrl/readyz"
 if ($healthStatus -ne 200 -or $readyStatus -ne 200) {
     throw "Expected healthz=200 and readyz=200 before the test, got healthz=$healthStatus readyz=$readyStatus"
 }
 
-Write-Host "[2/7] Creating a secret before restart..." -ForegroundColor Yellow
+Write-Host "[2/8] Creating a secret before restart..." -ForegroundColor Yellow
 $createBody = @{
     ciphertext = $TestCiphertext
     nonce = $TestNonce
@@ -73,23 +73,29 @@ if (-not $secretId) {
 }
 Write-Host "Created secret: $secretId"
 
-Write-Host "[3/7] Verifying status before restart..." -ForegroundColor Yellow
-$statusResponse = Invoke-RestMethod -Uri "$ApiBaseUrl/api/secrets/$secretId/status" -Method Get
+Write-Host "[3/8] Verifying status before restart and checking rate-limit headers..." -ForegroundColor Yellow
+$statusHttpResponse = Invoke-WebRequest -Uri "$ApiBaseUrl/api/secrets/$secretId/status" -Method Get
+$statusResponse = $statusHttpResponse.Content | ConvertFrom-Json
 if ($statusResponse.status -ne "active") {
     throw "Expected active status before restart, got '$($statusResponse.status)'"
 }
+foreach ($headerName in @("X-RateLimit-Limit", "X-RateLimit-Remaining", "X-RateLimit-Reset")) {
+    if (-not $statusHttpResponse.Headers[$headerName]) {
+        throw "Expected $headerName header to be present on status response."
+    }
+}
 
-Write-Host "[4/7] Restarting the API..." -ForegroundColor Yellow
+Write-Host "[4/8] Restarting the API..." -ForegroundColor Yellow
 if ($RestartCommand -eq "manual") {
     Read-Host "Restart the API service/container now, then press Enter to continue"
 } else {
     Invoke-Expression $RestartCommand
 }
 
-Write-Host "[5/7] Waiting for readyz to recover..." -ForegroundColor Yellow
+Write-Host "[5/8] Waiting for readyz to recover..." -ForegroundColor Yellow
 Wait-ForReady
 
-Write-Host "[6/7] Revealing the secret created before restart..." -ForegroundColor Yellow
+Write-Host "[6/8] Revealing the secret created before restart..." -ForegroundColor Yellow
 $consumeResponse = Invoke-RestMethod -Uri "$ApiBaseUrl/api/secrets/$secretId/consume" `
     -Method Post `
     -ContentType "application/json" `
@@ -99,7 +105,35 @@ if ($consumeResponse.ciphertext -ne $TestCiphertext) {
     throw "Expected ciphertext '$TestCiphertext' after restart, got '$($consumeResponse.ciphertext)'"
 }
 
-Write-Host "[7/7] Sending an oversized request through the public edge..." -ForegroundColor Yellow
+Write-Host "[7/8] Verifying the same secret cannot be consumed twice..." -ForegroundColor Yellow
+try {
+    $secondConsumeResponse = Invoke-WebRequest -Uri "$ApiBaseUrl/api/secrets/$secretId/consume" `
+        -Method Post `
+        -ContentType "application/json" `
+        -Body "{}"
+
+    throw "Expected second consume to return 410, got $($secondConsumeResponse.StatusCode)"
+} catch {
+    if (-not $_.Exception.Response) {
+        throw
+    }
+
+    $statusCode = [int]$_.Exception.Response.StatusCode.value__
+    if ($statusCode -ne 410) {
+        throw "Expected second consume to return 410, got $statusCode"
+    }
+
+    $reader = New-Object System.IO.StreamReader($_.Exception.Response.GetResponseStream())
+    $errorBody = $reader.ReadToEnd()
+    $reader.Dispose()
+
+    $errorPayload = $errorBody | ConvertFrom-Json
+    if ($errorPayload.error -ne "SECRET_CONSUMED") {
+        throw "Expected second consume error to be SECRET_CONSUMED, got '$($errorPayload.error)'"
+    }
+}
+
+Write-Host "[8/8] Sending an oversized request through the public edge..." -ForegroundColor Yellow
 $oversizedBody = @{
     ciphertext = ("A" * 40KB)
     nonce = $TestNonce
@@ -127,4 +161,4 @@ try {
 
 Write-Host ""
 Write-Host "Production smoke test passed." -ForegroundColor Green
-Write-Host "The API survived a restart, preserved SECRET_ENCRYPTION_KEY continuity, and rejected oversized edge traffic." -ForegroundColor Green
+Write-Host "The API preserved SECRET_ENCRYPTION_KEY continuity, emitted rate-limit headers, rejected double consume, and blocked oversized edge traffic." -ForegroundColor Green

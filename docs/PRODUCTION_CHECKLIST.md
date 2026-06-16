@@ -186,6 +186,7 @@ For the current pre-implementation hardening scope and open questions, read [dep
 
 - [ ] **Smoke tests**
   - Run `./scripts/test-production-smoke.sh` or `./scripts/test-production-smoke.ps1`
+  - Run `cd frontend/web-app && E2E_TARGET_BASE_URL=https://secret.quorix.io.vn npm run test:e2e` to cover reveal UX on the deployed frontend
   - Create a test secret and save its full link
   - Retrieve test secret status
   - Restart the API service or container before first reveal and verify the existing secret still opens successfully
