@@ -50,10 +50,12 @@ export function CreateSecretForm() {
     let cancelled = false;
 
     void import("qrcode")
-      .then((QRCode) => {
+      .then((QRCodeModule) => {
         if (cancelled || !qrCanvasRef.current) {
           return;
         }
+
+        const QRCode = (QRCodeModule as any).default || QRCodeModule;
 
         QRCode.toCanvas(
           qrCanvasRef.current,
@@ -66,7 +68,7 @@ export function CreateSecretForm() {
               light: "#ffffff",
             },
           },
-          (err) => {
+          (err: any) => {
             if (err) console.error("QR Code generation error:", err);
           }
         );
