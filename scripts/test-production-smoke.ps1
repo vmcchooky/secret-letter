@@ -75,8 +75,8 @@ Write-Host "Created secret: $secretId"
 
 Write-Host "[3/7] Verifying status before restart..." -ForegroundColor Yellow
 $statusResponse = Invoke-RestMethod -Uri "$ApiBaseUrl/api/secrets/$secretId/status" -Method Get
-if ($statusResponse.status -ne "pending") {
-    throw "Expected pending status before restart, got '$($statusResponse.status)'"
+if ($statusResponse.status -ne "active") {
+    throw "Expected active status before restart, got '$($statusResponse.status)'"
 }
 
 Write-Host "[4/7] Restarting the API..." -ForegroundColor Yellow

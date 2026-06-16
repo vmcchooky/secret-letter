@@ -58,6 +58,7 @@ jobs:
       frontend_archive_name: ${{ steps.meta.outputs.frontend_archive_name }}
       source_archive_name: ${{ steps.meta.outputs.source_archive_name }}
       manifest_name: ${{ steps.meta.outputs.manifest_name }}
+      checksums_name: ${{ steps.meta.outputs.checksums_name }}
       vite_api_base_url: ${{ steps.meta.outputs.vite_api_base_url }}
       vite_public_secret_origin: ${{ steps.meta.outputs.vite_public_secret_origin }}
     steps:
@@ -102,6 +103,7 @@ jobs:
           echo "frontend_archive_name=secret-letter-web-$version.tar.gz" >> "$GITHUB_OUTPUT"
           echo "source_archive_name=secret-letter-source-$version.tar.gz" >> "$GITHUB_OUTPUT"
           echo "manifest_name=release-manifest-$version.json" >> "$GITHUB_OUTPUT"
+          echo "checksums_name=release-checksums-$version.txt" >> "$GITHUB_OUTPUT"
           echo "vite_api_base_url=$vite_api_base_url" >> "$GITHUB_OUTPUT"
           echo "vite_public_secret_origin=$vite_public_secret_origin" >> "$GITHUB_OUTPUT"
 
@@ -152,6 +154,9 @@ jobs:
           FRONTEND_ARCHIVE_NAME: ${{ steps.meta.outputs.frontend_archive_name }}
           SOURCE_ARCHIVE_NAME: ${{ steps.meta.outputs.source_archive_name }}
           MANIFEST_NAME: ${{ steps.meta.outputs.manifest_name }}
+          CHECKSUMS_NAME: ${{ steps.meta.outputs.checksums_name }}
+          VITE_API_BASE_URL: ${{ steps.meta.outputs.vite_api_base_url }}
+          VITE_PUBLIC_SECRET_ORIGIN: ${{ steps.meta.outputs.vite_public_secret_origin }}
         run: |
           set -euo pipefail
 
@@ -162,25 +167,64 @@ jobs:
           python - <<'PY'
           import json
           import os
+          import hashlib
+          from datetime import datetime, timezone
           from pathlib import Path
 
           build_dir = Path("build")
+
+          def sha256sum(path: Path) -> str:
+              digest = hashlib.sha256()
+              with path.open("rb") as handle:
+                  for chunk in iter(lambda: handle.read(1024 * 1024), b""):
+                      digest.update(chunk)
+              return digest.hexdigest()
+
+          artifact_specs = [
+              ("backend", os.environ["BACKEND_ARCHIVE_NAME"]),
+              ("frontend", os.environ["FRONTEND_ARCHIVE_NAME"]),
+              ("source", os.environ["SOURCE_ARCHIVE_NAME"]),
+          ]
+
+          artifacts = []
+          for kind, filename in artifact_specs:
+              path = build_dir / filename
+              artifacts.append(
+                  {
+                      "name": filename,
+                      "kind": kind,
+                      "sha256": sha256sum(path),
+                      "size_bytes": path.stat().st_size,
+                  }
+              )
+
           manifest = {
               "version": os.environ["VERSION"],
               "git_sha": os.environ["GITHUB_SHA"],
               "ref": os.environ["GITHUB_REF"],
               "run_id": os.environ["GITHUB_RUN_ID"],
-              "artifacts": [
-                  os.environ["BACKEND_ARCHIVE_NAME"],
-                  os.environ["FRONTEND_ARCHIVE_NAME"],
-                  os.environ["SOURCE_ARCHIVE_NAME"],
-              ],
+              "generated_at": datetime.now(timezone.utc).isoformat(),
+              "frontend_build": {
+                  "vite_api_base_url": os.environ["VITE_API_BASE_URL"],
+                  "vite_public_secret_origin": os.environ["VITE_PUBLIC_SECRET_ORIGIN"],
+              },
+              "artifacts": artifacts,
           }
           (build_dir / os.environ["MANIFEST_NAME"]).write_text(
               json.dumps(manifest, indent=2),
               encoding="utf-8",
           )
           PY
+
+          (
+            cd build
+            sha256sum \
+              "$BACKEND_ARCHIVE_NAME" \
+              "$FRONTEND_ARCHIVE_NAME" \
+              "$SOURCE_ARCHIVE_NAME" \
+              "$MANIFEST_NAME" \
+              > "$CHECKSUMS_NAME"
+          )
 
       - name: Upload workflow artifacts
         uses: actions/upload-artifact@v4
@@ -192,6 +236,7 @@ jobs:
             build/${{ steps.meta.outputs.frontend_archive_name }}
             build/${{ steps.meta.outputs.source_archive_name }}
             build/${{ steps.meta.outputs.manifest_name }}
+            build/${{ steps.meta.outputs.checksums_name }}
 
   publish-release-assets:
     name: Publish GitHub Release Assets
@@ -244,6 +289,26 @@ jobs:
             chmod 600 "${{ runner.temp }}/ssh/known_hosts"
           fi
 
+      - name: Validate staging configuration
+        shell: bash
+        env:
+          STAGING_SSH_HOST: ${{ secrets.STAGING_SSH_HOST }}
+          STAGING_SSH_USER: ${{ secrets.STAGING_SSH_USER }}
+          STAGING_REMOTE_DEPLOY_COMMAND: ${{ vars.STAGING_REMOTE_DEPLOY_COMMAND }}
+        run: |
+          set -euo pipefail
+          required_vars=(
+            STAGING_SSH_HOST
+            STAGING_SSH_USER
+            STAGING_REMOTE_DEPLOY_COMMAND
+          )
+          for name in "${required_vars[@]}"; do
+            if [[ -z "${!name:-}" ]]; then
+              echo "Missing required staging configuration: $name" >&2
+              exit 1
+            fi
+          done
+
       - name: Run gated staging deployment
         shell: bash
         env:
@@ -253,10 +318,13 @@ jobs:
           STAGING_DEPLOY_PATH: ${{ vars.STAGING_DEPLOY_PATH || '/opt/secret-letter-staging' }}
           STAGING_REMOTE_DEPLOY_COMMAND: ${{ vars.STAGING_REMOTE_DEPLOY_COMMAND }}
           STAGING_REMOTE_POST_DEPLOY_COMMAND: ${{ vars.STAGING_REMOTE_POST_DEPLOY_COMMAND }}
+          STAGING_KEEP_RELEASES: ${{ vars.STAGING_KEEP_RELEASES || '5' }}
           STAGING_RELEASE_VERSION: ${{ needs.build-release-assets.outputs.version }}
           STAGING_BACKEND_ARCHIVE: ${{ github.workspace }}/release-assets/${{ needs.build-release-assets.outputs.backend_archive_name }}
           STAGING_FRONTEND_ARCHIVE: ${{ github.workspace }}/release-assets/${{ needs.build-release-assets.outputs.frontend_archive_name }}
           STAGING_SOURCE_ARCHIVE: ${{ github.workspace }}/release-assets/${{ needs.build-release-assets.outputs.source_archive_name }}
+          STAGING_RELEASE_MANIFEST: ${{ github.workspace }}/release-assets/${{ needs.build-release-assets.outputs.manifest_name }}
+          STAGING_RELEASE_CHECKSUMS: ${{ github.workspace }}/release-assets/${{ needs.build-release-assets.outputs.checksums_name }}
           STAGING_SSH_PRIVATE_KEY_FILE: ${{ runner.temp }}/ssh/staging_key
           STAGING_KNOWN_HOSTS_FILE: ${{ runner.temp }}/ssh/known_hosts
         run: bash ./scripts/deploy-staging.sh

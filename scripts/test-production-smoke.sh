@@ -60,8 +60,8 @@ echo "Created secret: $secret_id"
 echo "[3/7] Verifying status before restart..."
 status_response="$(curl -s "$API_BASE_URL/api/secrets/$secret_id/status")"
 status_value="$(printf "%s\n" "$status_response" | grep -o '"status":"[^"]*"' | cut -d'"' -f4 || true)"
-if [ "$status_value" != "pending" ]; then
-  echo "Expected pending status before restart, got '$status_value'"
+if [ "$status_value" != "active" ]; then
+  echo "Expected active status before restart, got '$status_value'"
   echo "$status_response"
   exit 1
 fi

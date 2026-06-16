@@ -80,13 +80,13 @@ $overallStart = Get-Date
 $batchSize = $Concurrent
 $totalBatches = [Math]::Ceiling($Requests / $batchSize)
 
-for ($batch = 0; $batch < $totalBatches; $batch++) {
+for ($batch = 0; $batch -lt $totalBatches; $batch++) {
     $batchStart = Get-Date
     $requestsInBatch = [Math]::Min($batchSize, $Requests - ($batch * $batchSize))
     
     # Create jobs for concurrent requests
     $jobs = @()
-    for ($i = 0; $i < $requestsInBatch; $i++) {
+    for ($i = 0; $i -lt $requestsInBatch; $i++) {
         $jobs += Start-Job -ScriptBlock {
             param($Url, $Body, $Method)
             

@@ -276,9 +276,9 @@ npm run test:e2e
 
 The frontend intentionally has no local `file:` dependency such as `@quorix/ui`, so `npm ci` works on a clean checkout.
 
-GitHub Actions CI also validates the shared-edge deployment artifacts by rendering the Compose topology, checking shell/PowerShell helper scripts, validating the Caddyfile, and building the API container image.
+GitHub Actions CI also validates the shared-edge deployment artifacts by rendering the Compose topology, checking shell/PowerShell helper scripts, dry-running the staging deploy helper with synthetic release bundles, validating the Caddyfile, and building the API container image.
 
-For tags, releases, and manual gated staging deploys, `.github/workflows/cd.yml` builds release assets, uploads workflow artifacts, attaches assets to published GitHub Releases, and can run a `staging` environment deployment after approval. The manual trigger also accepts frontend URL overrides so staging builds do not have to reuse production origins.
+For tags, releases, and manual gated staging deploys, `.github/workflows/cd.yml` builds release assets, emits a release manifest plus SHA-256 checksum sidecars, uploads workflow artifacts, attaches assets to published GitHub Releases, and can run a `staging` environment deployment after approval. The staging deploy helper verifies those artifacts locally and remotely, keeps `current`/`previous` staged release pointers for rollback, and the manual trigger still accepts frontend URL overrides so staging builds do not have to reuse production origins.
 
 ## Current Features
 

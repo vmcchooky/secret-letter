@@ -40,6 +40,7 @@ Checklist nay dung cho phuong an:
 - `SECRET_ENCRYPTION_KEY` da duoc generate va luu trong secret manager hoac `.env` production
 - file cau hinh deploy da duoc backup truoc khi deploy
 - staging da duoc deploy va smoke test truoc production
+- neu dung workflow CD/staging, release bundle da duoc verify qua `release-manifest-*.json` va `release-checksums-*.txt`
 
 ### Quality gate truoc deploy
 

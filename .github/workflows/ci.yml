@@ -106,6 +106,90 @@ jobs:
       - name: Validate deployment shell scripts
         run: bash -n scripts/*.sh deploy/prod/init-vps.sh
 
+      - name: Validate staging deploy helper
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          tmpdir="$(mktemp -d)"
+          trap 'rm -rf "$tmpdir"' EXIT
+
+          mkdir -p "$tmpdir/source/repo" "$tmpdir/backend" "$tmpdir/frontend/dist"
+          printf 'release-source\n' > "$tmpdir/source/repo/README.txt"
+          printf 'backend-binary\n' > "$tmpdir/backend/secret-letter-api-linux-amd64"
+          printf '<!doctype html>\n' > "$tmpdir/frontend/dist/index.html"
+          printf 'placeholder-key\n' > "$tmpdir/staging_key"
+          chmod 600 "$tmpdir/staging_key"
+
+          tar -czf "$tmpdir/secret-letter-source-test.tar.gz" -C "$tmpdir/source" repo
+          tar -czf "$tmpdir/secret-letter-api-test.tar.gz" -C "$tmpdir/backend" secret-letter-api-linux-amd64
+          tar -czf "$tmpdir/secret-letter-web-test.tar.gz" -C "$tmpdir/frontend" dist
+
+          TMPDIR_PATH="$tmpdir" python - <<'PY'
+          import hashlib
+          import json
+          import os
+          from pathlib import Path
+
+          root = Path(os.environ["TMPDIR_PATH"])
+          artifact_specs = [
+              ("backend", "secret-letter-api-test.tar.gz"),
+              ("frontend", "secret-letter-web-test.tar.gz"),
+              ("source", "secret-letter-source-test.tar.gz"),
+          ]
+
+          def sha256sum(path: Path) -> str:
+              digest = hashlib.sha256()
+              with path.open("rb") as handle:
+                  for chunk in iter(lambda: handle.read(1024 * 1024), b""):
+                      digest.update(chunk)
+              return digest.hexdigest()
+
+          manifest = {
+              "version": "test-release",
+              "artifacts": [],
+          }
+
+          for kind, filename in artifact_specs:
+              path = root / filename
+              manifest["artifacts"].append(
+                  {
+                      "name": filename,
+                      "kind": kind,
+                      "sha256": sha256sum(path),
+                      "size_bytes": path.stat().st_size,
+                  }
+              )
+
+          (root / "release-manifest-test.json").write_text(json.dumps(manifest, indent=2), encoding="utf-8")
+          PY
+
+          (
+            cd "$tmpdir"
+            sha256sum \
+              secret-letter-api-test.tar.gz \
+              secret-letter-web-test.tar.gz \
+              secret-letter-source-test.tar.gz \
+              release-manifest-test.json \
+              > release-checksums-test.txt
+          )
+
+          DRY_RUN=1 \
+          STAGING_SSH_HOST=staging.example.com \
+          STAGING_SSH_USER=deploy \
+          STAGING_SSH_PRIVATE_KEY_FILE="$tmpdir/staging_key" \
+          STAGING_DEPLOY_PATH=/opt/secret-letter-staging \
+          STAGING_REMOTE_DEPLOY_COMMAND='echo deploy' \
+          STAGING_REMOTE_POST_DEPLOY_COMMAND='echo smoke' \
+          STAGING_KEEP_RELEASES=4 \
+          STAGING_RELEASE_VERSION=test-release \
+          STAGING_SOURCE_ARCHIVE="$tmpdir/secret-letter-source-test.tar.gz" \
+          STAGING_BACKEND_ARCHIVE="$tmpdir/secret-letter-api-test.tar.gz" \
+          STAGING_FRONTEND_ARCHIVE="$tmpdir/secret-letter-web-test.tar.gz" \
+          STAGING_RELEASE_MANIFEST="$tmpdir/release-manifest-test.json" \
+          STAGING_RELEASE_CHECKSUMS="$tmpdir/release-checksums-test.txt" \
+          bash ./scripts/deploy-staging.sh
+
       - name: Validate deployment PowerShell scripts
         shell: pwsh
         run: |

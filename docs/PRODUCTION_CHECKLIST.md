@@ -149,6 +149,7 @@ For the current pre-implementation hardening scope and open questions, read [dep
 
 - [ ] **Upload deployment package**
   - Upload `secret-letter-api-{version}.tar.gz` to server
+  - If you use the GitHub Actions staging path, verify `release-manifest-*.json` and `release-checksums-*.txt` before extraction
   - Extract to deployment directory
   - Verify file permissions
 
@@ -251,6 +252,8 @@ If issues are detected after deployment:
    ```bash
    cp /backup/secret-letter-api /usr/local/bin/
    ```
+
+   If you deploy through `scripts/deploy-staging.sh`, prefer rolling back to the `previous` staged release and rerunning its stored deploy command from the staging release root.
 
 3. **Restore previous configuration**
    ```bash
