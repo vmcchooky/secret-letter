@@ -851,6 +851,8 @@ button:disabled {
   display: grid;
   place-items: center;
   animation: otl-fade-in 0.22s ease-out forwards;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .otl-modal-overlay.is-exiting {
@@ -875,6 +877,10 @@ button:disabled {
   gap: 16px;
   text-align: center;
   animation: otl-scale-up 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+  cursor: default;
+  max-height: 85dvh;
+  overflow-y: auto;
+  overscroll-behavior: contain;
 }
 
 .otl-modal-overlay.is-exiting .otl-modal-card {
