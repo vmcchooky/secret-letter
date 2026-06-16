@@ -1,5 +1,7 @@
 # secret-letter On The Shared Quorix VPS
 
+This is the **primary production reference path** for the current hardening sprint and first public go-live.
+
 Use this when `secret.quorix.io.vn` and `api.secret.quorix.io.vn` are served by the host-level Caddy edge.
 
 ## Backend
@@ -17,6 +19,10 @@ docker compose \
 
 The API listens on `127.0.0.1:18080`; Redis stays private in the Compose network.
 
+The base production Compose file now keeps the bundled `caddy` service behind the opt-in `bundled-edge` profile. The shared-edge override keeps that service disabled so the host-level Caddy edge is the only public entrypoint.
+
+The API container now also runs with a read-only root filesystem, a minimal `/tmp` tmpfs, dropped Linux capabilities, and `no-new-privileges`.
+
 Recommended rate-limit values for the shared VPS are configured through `deploy/prod/.env`:
 
 ```sh
@@ -29,6 +35,43 @@ RATE_LIMIT_STATUS_PER_WINDOW=600
 RATE_LIMIT_REVEAL_SESSION_PER_WINDOW=240
 TRUSTED_PROXY_CIDRS=172.16.0.0/12
 ```
+
+## Host Caddy Edge Boundary
+
+Mirror the API boundary rules at the host-level Caddy edge:
+
+```caddyfile
+api.secret.quorix.io.vn {
+    tls {
+        protocols tls1.2 tls1.3
+    }
+
+    route {
+        request_body {
+            max_size 32KB
+        }
+
+        reverse_proxy 127.0.0.1:18080
+    }
+
+    encode zstd gzip
+
+    header {
+        X-Content-Type-Options nosniff
+        X-Frame-Options DENY
+        Referrer-Policy no-referrer
+        Strict-Transport-Security "max-age=31536000; includeSubDomains"
+    }
+}
+```
+
+Use Caddy `2.10+` on the host if you rely on the `request_body` directive for proxy-layer size enforcement.
+
+Keep the forwarded-header trust boundary tight:
+
+- Let the edge overwrite `X-Forwarded-For`, `X-Forwarded-Proto`, and `X-Forwarded-Host`; do not pass client-supplied values through unchanged.
+- Keep `TRUSTED_PROXY_CIDRS` scoped to the final hop that reaches the API container, not the public internet.
+- If another proxy or CDN sits in front of the host Caddy edge, configure that trust relationship there first before expanding the API trust list.
 
 ## Frontend
 
@@ -50,6 +93,41 @@ The host Caddy edge serves `/var/www/secret-letter/frontend/dist` for `secret.qu
 curl -I http://127.0.0.1:18080/healthz
 curl -I https://api.secret.quorix.io.vn/healthz
 curl -I https://secret.quorix.io.vn/
+```
+
+Confirm oversized requests are rejected at the proxy layer:
+
+```sh
+python3 - <<'PY' > /tmp/secret-letter-oversized.json
+import json
+
+print(json.dumps({
+    "ciphertext": "A" * (40 * 1024),
+    "nonce": "MTIzNDU2Nzg5MDEy",
+    "algorithm": "AES-GCM",
+    "ttlSeconds": 3600,
+}))
+PY
+
+curl -s -o /dev/null -w "%{http_code}\n" \
+  -H 'Content-Type: application/json' \
+  --data-binary @/tmp/secret-letter-oversized.json \
+  https://api.secret.quorix.io.vn/api/secrets
+# expect: 413
+```
+
+From the repo root on the VPS, you can also run the repeatable verification scripts:
+
+```sh
+./scripts/test-trusted-proxy.sh
+./scripts/test-production-smoke.sh
+```
+
+To verify the API runtime hardening directly:
+
+```sh
+docker inspect secret-letter-api --format '{{.Config.User}} {{.HostConfig.ReadonlyRootfs}} {{json .HostConfig.CapDrop}}'
+# expect: app true ["ALL"]
 ```
 
 Then run the product smoke test:

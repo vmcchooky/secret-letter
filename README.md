@@ -14,6 +14,9 @@ Repository hiện đang ở giai đoạn:
 - ✅ **Milestone 4:** Rate Limiting and Production Readiness - COMPLETE
 - ⏳ **Milestone 5:** Production Deployment - NEXT
 
+Truoc khi bat dau sua code cho production go-live, xem spec hardening:
+- [docs/deployment/production-hardening-upgrade-spec.md](docs/deployment/production-hardening-upgrade-spec.md)
+
 ### Milestone 4 Highlights
 
 - ✅ Rate limiting (120/hr create, 240/hr consume, 600/hr status, 240/hr reveal session)
@@ -93,6 +96,7 @@ Frontend sẽ chạy tại `http://localhost:5173` theo mặc định.
 ### Deployment Documentation
 - [docs/deployment/deployment-guide.md](docs/deployment/deployment-guide.md) - Hướng dẫn deployment
 - [docs/deployment/production-checklist.md](docs/deployment/production-checklist.md) - Production checklist
+- [docs/deployment/production-hardening-upgrade-spec.md](docs/deployment/production-hardening-upgrade-spec.md) - Spec nâng cấp hardening trước go-live
 
 ### Milestone Documentation
 - [docs/MILESTONE_1_COMPLETION.md](docs/MILESTONE_1_COMPLETION.md) - Milestone 1 completion report
@@ -272,6 +276,10 @@ npm run test:e2e
 
 The frontend intentionally has no local `file:` dependency such as `@quorix/ui`, so `npm ci` works on a clean checkout.
 
+GitHub Actions CI also validates the shared-edge deployment artifacts by rendering the Compose topology, checking shell/PowerShell helper scripts, validating the Caddyfile, and building the API container image.
+
+For tags, releases, and manual gated staging deploys, `.github/workflows/cd.yml` builds release assets, uploads workflow artifacts, attaches assets to published GitHub Releases, and can run a `staging` environment deployment after approval.
+
 ## Current Features
 
 ### Working Features ✅
@@ -444,7 +452,7 @@ Hoặc xem [DEVELOPMENT.md](DEVELOPMENT.md) để biết chi tiết về:
 
 ## Project Status
 
-**Current Status:** Production-ready, awaiting deployment  
+**Current Status:** Production deployment planning and hardening in progress
 **Completed Milestones:** 4/7 (57%)  
 **Next Milestone:** Production Deployment
 

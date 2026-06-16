@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"fmt"
+	"log"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -278,5 +280,46 @@ func TestCORSHeaders(t *testing.T) {
 		if got := rec.Header().Get(header); got != want {
 			t.Errorf("expected %s to be %q, got %q", header, want, got)
 		}
+	}
+}
+
+func TestRequestLoggingUsesTrustedClientIP(t *testing.T) {
+	server := NewServer(config.Config{
+		ServiceName:       "test-api",
+		Host:              "127.0.0.1",
+		Port:              "8080",
+		AllowedOrigin:     "http://localhost:5173",
+		TrustedProxyCIDRs: "10.0.0.0/8",
+	}, secret.NewInMemoryService())
+
+	var logBuffer bytes.Buffer
+	originalWriter := log.Writer()
+	originalFlags := log.Flags()
+	log.SetOutput(&logBuffer)
+	log.SetFlags(0)
+	defer func() {
+		log.SetOutput(originalWriter)
+		log.SetFlags(originalFlags)
+	}()
+
+	req := httptest.NewRequest(http.MethodGet, "/healthz", nil)
+	req.RemoteAddr = "10.0.0.1:12345"
+	req.Header.Set("X-Forwarded-For", "203.0.113.10")
+	rec := httptest.NewRecorder()
+
+	server.Handler().ServeHTTP(rec, req)
+
+	logOutput := logBuffer.String()
+	expectedForwardedHash := hashString("203.0.113.10")
+	if !strings.Contains(logOutput, fmt.Sprintf(`"ip_hash":"%s"`, expectedForwardedHash)) {
+		t.Fatalf("expected log output to contain forwarded client IP hash %q, got %s", expectedForwardedHash, logOutput)
+	}
+
+	if strings.Contains(logOutput, hashString("10.0.0.1:12345")) {
+		t.Fatalf("log output should not hash the raw remote address with port: %s", logOutput)
+	}
+
+	if strings.Contains(logOutput, hashString("10.0.0.1")) {
+		t.Fatalf("log output should not hash the trusted proxy IP: %s", logOutput)
 	}
 }

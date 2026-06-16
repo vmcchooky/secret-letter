@@ -4,9 +4,16 @@ on:
   push:
   pull_request:
 
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   backend:
-    name: Backend Tests
+    name: Backend Verify
     runs-on: ubuntu-latest
     services:
       redis:
@@ -28,13 +35,27 @@ jobs:
           go-version-file: go.mod
           cache: true
 
+      - name: Install backend security tools
+        env:
+          GOBIN: ${{ github.workspace }}/.bin
+        run: |
+          mkdir -p "$GOBIN"
+          go install github.com/securego/gosec/v2/cmd/gosec@latest
+          go install golang.org/x/vuln/cmd/govulncheck@latest
+
       - name: Run Go tests
         env:
           REDIS_ADDR: 127.0.0.1:6379
         run: go test ./...
 
+      - name: Run gosec
+        run: ${{ github.workspace }}/.bin/gosec ./...
+
+      - name: Run govulncheck
+        run: ${{ github.workspace }}/.bin/govulncheck ./...
+
   frontend:
-    name: Frontend Tests
+    name: Frontend Verify
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -59,7 +80,48 @@ jobs:
         working-directory: frontend/web-app
         env:
           VITE_API_BASE_URL: http://127.0.0.1:8080
+          VITE_PUBLIC_SECRET_ORIGIN: http://127.0.0.1:4173
         run: npm run build
+
+      - name: Audit production dependencies
+        working-directory: frontend/web-app
+        run: npm audit --omit=dev
+
+  deploy-artifacts:
+    name: Deploy Artifact Verify
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Render shared-edge Compose config
+        run: |
+          cp deploy/prod/.env.vps-edge.example deploy/prod/.env
+          trap 'rm -f deploy/prod/.env' EXIT
+          docker compose \
+            -f deploy/prod/docker-compose.yml \
+            -f deploy/prod/docker-compose.vps-edge.yml \
+            config
+
+      - name: Validate deployment shell scripts
+        run: bash -n scripts/*.sh deploy/prod/init-vps.sh
+
+      - name: Validate deployment PowerShell scripts
+        shell: pwsh
+        run: |
+          Get-ChildItem scripts -Filter *.ps1 | ForEach-Object {
+            [void][scriptblock]::Create((Get-Content $_.FullName -Raw))
+          }
+
+      - name: Validate Caddy config
+        run: |
+          docker run --rm \
+            -v "$PWD/deploy/prod/Caddyfile:/etc/caddy/Caddyfile:ro" \
+            caddy:2.10-alpine \
+            caddy validate --config /etc/caddy/Caddyfile
+
+      - name: Build API container image
+        run: docker build -t secret-letter-api-ci .
 
   e2e:
     name: E2E Flow
@@ -67,6 +129,7 @@ jobs:
     needs:
       - backend
       - frontend
+      - deploy-artifacts
     services:
       redis:
         image: redis:7-alpine

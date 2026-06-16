@@ -38,27 +38,34 @@ docker compose -f deploy/local/docker-compose.yml ps
 
 ### Reverse Proxy
 
-`prod/Caddyfile` - Caddy reverse proxy configuration cho API domain
-`prod/docker-compose.vps-edge.yml` - Override for the shared Quorix VPS edge; publishes the API on `127.0.0.1:18080` and disables the bundled Caddy service.
+`prod/Caddyfile` - Bundled Caddy configuration for the optional in-stack edge path
+`prod/docker-compose.vps-edge.yml` - Shared Quorix VPS edge override; keeps the bundled Caddy service disabled
+`../docs/deployment/shared-vps-edge.md` - Primary production reference path for the current hardening/go-live sprint
 
 **Features:**
 - Automatic HTTPS với Let's Encrypt
 - Reverse proxy to Go API
 - Security headers
+- Request body limit at the proxy boundary
+- API container runs with read-only rootfs + dropped capabilities
 - Access logging
 
 **Usage:**
 ```bash
-# Install Caddy
-# See: https://caddyserver.com/docs/install
+# Shared VPS edge (primary path)
+docker compose \
+  -f prod/docker-compose.yml \
+  -f prod/docker-compose.vps-edge.yml \
+  up -d --build redis api
 
-# Run Caddy
-caddy run --config prod/Caddyfile
+# Bundled edge path (opt-in)
+docker compose --profile bundled-edge -f prod/docker-compose.yml up -d --build
 ```
 
 ### Environment Configuration
 
 `prod/.env.example` - Sample environment variables cho production
+`prod/.env.vps-edge.example` - Recommended environment template for the shared VPS edge
 
 **Required Variables:**
 ```bash
@@ -68,7 +75,6 @@ APP_HOST=0.0.0.0
 APP_PORT=8080
 ALLOWED_ORIGIN=https://your-frontend.com
 TRUSTED_PROXY_CIDRS=172.16.0.0/12
-REDIS_ADDR=localhost:6379
 REDIS_PASSWORD=your-secure-password
 REDIS_DB=0
 REDIS_POOL_SIZE=50
@@ -94,10 +100,10 @@ Set `TRUSTED_PROXY_CIDRS` to the network range used by your reverse proxy. For t
 **Setup:**
 ```bash
 # Copy template
-cp prod/.env.example .env
+cp prod/.env.vps-edge.example prod/.env
 
 # Edit with your values
-nano .env
+nano prod/.env
 ```
 
 ## Production Deployment Guide
@@ -109,40 +115,30 @@ For complete deployment instructions, see:
 
 ### Quick Deployment Steps
 
-1. **Build production binary:**
+1. **Prepare the production environment file:**
    ```bash
-   ./scripts/build-production.sh
+   cp deploy/prod/.env.vps-edge.example deploy/prod/.env
    ```
 
-2. **Setup VPS:**
-   - Install Go, Redis, Caddy
-   - Configure firewall (ports 80, 443, 6379)
-   - Setup systemd service
+2. **Edit `deploy/prod/.env`:**
+   - Keep `ALLOWED_ORIGIN=https://secret.quorix.io.vn`
+   - Keep `TRUSTED_PROXY_CIDRS` scoped to the proxy hop only
+   - Set a strong `REDIS_PASSWORD`
+   - Generate one stable `SECRET_ENCRYPTION_KEY`
 
-3. **Configure environment:**
+3. **Bring up Redis and the API behind the host-level edge:**
    ```bash
-   cp deploy/prod/.env.example /opt/secret-letter/.env
-   # Edit .env with production values
+   docker compose \
+     -f deploy/prod/docker-compose.yml \
+     -f deploy/prod/docker-compose.vps-edge.yml \
+     up -d --build redis api
    ```
 
-4. **Deploy binary:**
+4. **Verify:**
    ```bash
-   # Upload and extract deployment package
-   tar -xzf secret-letter-api-{version}.tar.gz
-   cp secret-letter-api-linux-amd64 /usr/local/bin/
-   ```
-
-5. **Start services:**
-   ```bash
-   systemctl start redis
-   systemctl start caddy
-   systemctl start secret-letter-api
-   ```
-
-6. **Verify:**
-   ```bash
-   curl https://api.your-domain.com/healthz
-   curl https://api.your-domain.com/readyz
+   curl http://127.0.0.1:18080/healthz
+   curl https://api.secret.quorix.io.vn/healthz
+   curl https://api.secret.quorix.io.vn/readyz
    ```
 
 ## Architecture
@@ -160,13 +156,13 @@ Redis (localhost:6379)
 ```
 Users
     ↓
-Frontend (Vercel)
+Host-level Caddy edge
     ↓
-Caddy (HTTPS, reverse proxy)
+Frontend static files + API reverse proxy
     ↓
-Go API (localhost:8080)
+Go API (Docker, published to 127.0.0.1:18080)
     ↓
-Redis (localhost:6379 with AUTH)
+Redis (private Compose network with AUTH)
 ```
 
 ## Security Considerations
@@ -178,9 +174,10 @@ Redis (localhost:6379 with AUTH)
 
 ### Production
 - ✅ Redis AUTH password required
-- ✅ HTTPS only (Caddy + Let's Encrypt)
+- ✅ HTTPS only (host-level Caddy + TLS 1.2+)
 - ✅ CORS restricted to frontend domain
 - ✅ Security headers enabled
+- ✅ Oversized request bodies rejected at the proxy boundary
 - ✅ Rate limiting enabled
 - ✅ Firewall configured
 
@@ -206,14 +203,8 @@ redis-cli -a your-password ping
 
 ### Logs
 ```bash
-# Backend logs
-journalctl -u secret-letter-api -f
-
-# Caddy logs
-journalctl -u caddy -f
-
-# Redis logs
-journalctl -u redis -f
+# Shared edge Compose logs
+docker compose -f deploy/prod/docker-compose.yml -f deploy/prod/docker-compose.vps-edge.yml logs -f api redis
 ```
 
 ## Troubleshooting

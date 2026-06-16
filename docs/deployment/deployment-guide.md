@@ -1,13 +1,27 @@
 # Deployment Guide
 
-This guide covers the complete deployment strategy for the secret-letter application, optimized for portfolio use with low cost and high learning value.
+This guide is **secondary/reference only** for the current hardening and first go-live sprint.
+
+Use [shared-vps-edge.md](shared-vps-edge.md) as the primary production runbook when deploying the current Compose API/Redis stack behind the shared host-level Caddy edge.
+
+This document remains useful for:
+- host-native or `systemd`-oriented deployments
+- broader infrastructure planning and failover context
+- understanding the larger deployment strategy around the project
+
+Before applying the go-live steps below, review [production-hardening-upgrade-spec.md](production-hardening-upgrade-spec.md) for the current hardening scope and open questions.
 
 ## 1. Deployment Overview
 
+**Current Production Status:**
+- **Primary go-live path**: shared host-level Caddy edge + Compose-managed API/Redis
+- **This guide**: secondary/reference path, not the default runbook for the current rollout
+
 **Architecture Summary:**
 - **Frontend**: React app deployed on Vercel
-- **Backend**: Single Go binary on Vietnamese VPS (primary)
+- **Backend**: Compose-managed API behind the shared host-level Caddy edge (primary)
 - **Database**: Self-hosted Redis on same VPS
+- **Alternative backend path**: Single Go binary + `systemd` on VPS (secondary/reference only)
 - **Standby**: Oracle Cloud VPS for failover and learning
 - **Domain**: Subdomains of existing `quorix.io.vn`
 
@@ -154,10 +168,16 @@ go build -o /opt/secret-letter/api ./cmd/api
 
 # Create environment file
 sudo tee /opt/secret-letter/.env << EOF
+APP_ENV=production
 APP_SERVICE_NAME=secret-letter-api
 APP_HOST=0.0.0.0
 APP_PORT=8080
 ALLOWED_ORIGIN=https://secret.quorix.io.vn
+TRUSTED_PROXY_CIDRS=127.0.0.1/32,::1/128
+REDIS_ADDR=127.0.0.1:6379
+REDIS_DB=0
+SECRET_ENCRYPTION_KEY=replace-with-stable-32-byte-base64url-hex-or-raw-key
+RATE_LIMIT_ENABLED=true
 EOF
 
 # Create systemd service

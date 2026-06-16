@@ -69,9 +69,9 @@ Milestone 4 adds production-ready features: rate limiting, enhanced error handli
 
 ### Environment Variables (.env)
 ```bash
-SERVICE_NAME=secret-letter-api
-HOST=0.0.0.0
-PORT=8080
+APP_SERVICE_NAME=secret-letter-api
+APP_HOST=0.0.0.0
+APP_PORT=8080
 ALLOWED_ORIGIN=https://your-frontend.com
 REDIS_ADDR=localhost:6379
 REDIS_PASSWORD=your-password

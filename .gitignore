@@ -16,6 +16,7 @@ frontend/web-app/tsconfig.tsbuildinfo
 *.so
 *.dylib
 coverage.out
+build/
 
 # Env / runtime
 .env
