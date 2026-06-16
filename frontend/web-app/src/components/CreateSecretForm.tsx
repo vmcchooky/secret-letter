@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback, type CSSProperties, type ChangeEvent, type FormEvent, type KeyboardEvent, type MouseEvent } from "react";
+import { createPortal } from "react-dom";
 import { TactileButton } from "./TactileButton";
 import { createSecret } from "../lib/api";
 import {
@@ -458,7 +459,7 @@ export function CreateSecretForm() {
             </TactileButton>
           </div>
 
-          {qrPresence.shouldRender && (
+          {qrPresence.shouldRender && createPortal(
             <div
               className={`otl-modal-overlay ${qrPresence.isExiting ? "is-exiting" : ""}`}
               onClick={() => setShowQr(false)}
@@ -479,10 +480,11 @@ export function CreateSecretForm() {
                 <p className="otl-modal-hint">Nhấn giữ để tải xuống mã</p>
                 <TactileButton className="otl-modal-close-btn" onClick={() => setShowQr(false)}>Đóng</TactileButton>
               </div>
-            </div>
+            </div>,
+            document.body
           )}
 
-          {sharePresence.shouldRender && (
+          {sharePresence.shouldRender && createPortal(
             <div
               className={`otl-modal-overlay ${sharePresence.isExiting ? "is-exiting" : ""}`}
               onClick={closeShareMenu}
@@ -528,7 +530,8 @@ export function CreateSecretForm() {
                 )}
                 <TactileButton className="otl-modal-close-btn" onClick={closeShareMenu}>Đóng</TactileButton>
               </div>
-            </div>
+            </div>,
+            document.body
           )}
 
           <TactileButton
