@@ -7,13 +7,16 @@ import (
 	"crypto/rand"
 	"crypto/sha256"
 	"encoding/base64"
+	"encoding/binary"
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"hash"
 	"io"
 	"log"
 	"os"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/redis/go-redis/v9"
@@ -525,8 +528,10 @@ func (s *RedisService) encryptPayload(payload SecretPayload) (*AtRestEnvelope, e
 		return nil, err
 	}
 
-	nonce, err := secureRandomBytes(gcm.NonceSize())
-	if err != nil {
+	// To prevent AES-GCM nonce collision (birthday paradox), we use 8 bytes of time + 4 bytes of randomness
+	nonce := make([]byte, gcm.NonceSize())
+	binary.BigEndian.PutUint64(nonce[:8], uint64(time.Now().UnixNano()))
+	if _, err := io.ReadFull(rand.Reader, nonce[8:]); err != nil {
 		return nil, err
 	}
 
@@ -616,16 +621,9 @@ func isProductionEnv(value string) bool {
 }
 
 func parseAtRestKey(value string) ([]byte, error) {
-	decoders := []*base64.Encoding{
-		base64.RawURLEncoding,
-		base64.URLEncoding,
-		base64.StdEncoding,
-	}
-
-	for _, decoder := range decoders {
-		if decoded, err := decoder.DecodeString(value); err == nil && len(decoded) == atRestKeyLength {
-			return decoded, nil
-		}
+	// Strict checking against Base64 RawURL and Hex to prevent timing side channels
+	if decoded, err := base64.RawURLEncoding.DecodeString(value); err == nil && len(decoded) == atRestKeyLength {
+		return decoded, nil
 	}
 
 	if decoded, err := hex.DecodeString(value); err == nil && len(decoded) == atRestKeyLength {
@@ -672,13 +670,23 @@ func secureRandomBytes(length int) ([]byte, error) {
 	return randomBytes, nil
 }
 
+var sha256Pool = sync.Pool{
+	New: func() interface{} {
+		return sha256.New()
+	},
+}
+
 func hashToken(token string) (string, error) {
 	if !isValidToken(token) {
 		return "", ErrInvalidToken
 	}
 
-	sum := sha256.Sum256([]byte(token))
-	return hex.EncodeToString(sum[:]), nil
+	h := sha256Pool.Get().(hash.Hash)
+	defer sha256Pool.Put(h)
+
+	h.Reset()
+	h.Write([]byte(token))
+	return hex.EncodeToString(h.Sum(nil)), nil
 }
 
 func isValidToken(token string) bool {

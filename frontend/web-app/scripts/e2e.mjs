@@ -14,6 +14,7 @@ const previewHost = "127.0.0.1";
 const previewStartPort = Number(process.env.E2E_PREVIEW_PORT || 4183);
 const backendStartPort = Number(process.env.E2E_BACKEND_PORT || 18080);
 const redisAddr = process.env.E2E_REDIS_ADDR || "127.0.0.1:6379";
+const deployedBaseUrl = (process.env.E2E_TARGET_BASE_URL || "").trim();
 
 const browserCandidates = process.platform === "win32"
   ? [
@@ -37,6 +38,10 @@ const browserCandidates = process.platform === "win32"
 
 function log(message) {
   process.stdout.write(`${message}\n`);
+}
+
+function normalizeBaseUrl(url) {
+  return url.endsWith("/") ? url.slice(0, -1) : url;
 }
 
 function spawnCommand(command, args, options = {}) {
@@ -298,11 +303,113 @@ async function buildFrontend(backendBaseUrl) {
   );
 }
 
+async function createSecretViaUi(page, secretText) {
+  log(`Creating secret via UI: ${secretText}`);
+  await page.goto("/");
+  await page.getByLabel("Nội dung bí mật").fill(secretText);
+  await page.getByRole("button", { name: "Tạo link bí mật" }).click();
+
+  const secretLinkInput = page.getByLabel("Secret link");
+  await secretLinkInput.waitFor({ state: "visible" });
+  const secretLink = await secretLinkInput.inputValue();
+  if (!secretLink.includes("#")) {
+    throw new Error(`Generated secret link is missing a fragment: ${secretLink}`);
+  }
+
+  return secretLink;
+}
+
+async function openSecretAndVerify(page, secretLink, secretText) {
+  log(`Opening reveal link: ${secretLink}`);
+  await page.goto(secretLink);
+
+  const consentButton = page.getByRole("button", { name: /Tôi hiểu rồi/i });
+  await consentButton.click();
+
+  const revealSessionResponsePromise = page.waitForResponse(
+    (response) =>
+      response.request().method() === "POST" &&
+      response.url().includes("/api/reveal-sessions"),
+  );
+
+  const openSecretResponsePromise = page.waitForResponse(
+    (response) =>
+      response.request().method() === "POST" &&
+      response.url().includes("/api/secrets/") &&
+      response.url().includes("/open"),
+  );
+
+  const openEnvelope = page.getByRole("button", { name: "Mở lá thư bí mật" });
+  await openEnvelope.waitFor({ state: "visible" });
+  await openEnvelope.focus();
+  await openEnvelope.press("Enter");
+
+  const revealSessionResponse = await revealSessionResponsePromise;
+  if (revealSessionResponse.status() !== 201) {
+    throw new Error(`Expected reveal session response 201, got ${revealSessionResponse.status()}`);
+  }
+
+  const openSecretResponse = await openSecretResponsePromise;
+  if (openSecretResponse.status() !== 200) {
+    throw new Error(`Expected open secret response 200, got ${openSecretResponse.status()}`);
+  }
+
+  const requestHeaders = openSecretResponse.request().headers();
+  if (!requestHeaders["x-reveal-session"]) {
+    throw new Error("Expected X-Reveal-Session header to be sent with open request");
+  }
+
+  await page.getByText(secretText, { exact: true }).waitFor({ state: "visible" });
+}
+
+async function expectConsumedState(context, secretLink) {
+  log("Verifying consumed state on a fresh revisit...");
+  const consumedPage = await context.newPage();
+  try {
+    await consumedPage.goto(secretLink);
+    await consumedPage.getByText("Liên kết này đã được mở một lần trước đó.").waitFor({ state: "visible" });
+  } finally {
+    await consumedPage.close().catch(() => {});
+  }
+}
+
+async function expectErrorState(page, url, message) {
+  await page.goto(url);
+  await page.getByText(message, { exact: true }).waitFor({ state: "visible" });
+}
+
+async function verifyFragmentGuardrails(page, context) {
+  const secretText = `Fragment guard ${Date.now()}`;
+  const secretLink = await createSecretViaUi(page, secretText);
+  const publicUrl = secretLink.split("#")[0];
+  const malformedUrl = `${publicUrl}#not-a-valid-key`;
+
+  log("Checking missing fragment state...");
+  await expectErrorState(page, publicUrl, "Liên kết không hợp lệ. Thiếu khóa giải mã.");
+
+  log("Checking malformed fragment state...");
+  await expectErrorState(
+    page,
+    malformedUrl,
+    "Khóa giải mã trong liên kết không đúng định dạng. Hãy kiểm tra lại phần sau dấu #.",
+  );
+
+  log("Verifying fragment errors do not consume the secret...");
+  const revealPage = await context.newPage();
+  try {
+    await openSecretAndVerify(revealPage, secretLink, secretText);
+    await expectConsumedState(context, secretLink);
+  } finally {
+    await revealPage.close().catch(() => {});
+  }
+}
+
 async function run() {
-  const backendPort = await findFreePort(backendStartPort);
-  const previewPort = await findFreePort(previewStartPort);
-  const backendBaseUrl = `http://${previewHost}:${backendPort}`;
-  const previewBaseUrl = `http://${previewHost}:${previewPort}`;
+  const useDeployedTarget = deployedBaseUrl.length > 0;
+  const backendPort = useDeployedTarget ? null : await findFreePort(backendStartPort);
+  const previewPort = useDeployedTarget ? null : await findFreePort(previewStartPort);
+  const backendBaseUrl = useDeployedTarget ? null : `http://${previewHost}:${backendPort}`;
+  const previewBaseUrl = useDeployedTarget ? normalizeBaseUrl(deployedBaseUrl) : `http://${previewHost}:${previewPort}`;
 
   let backendProcess;
   let previewProcess;
@@ -310,10 +417,15 @@ async function run() {
   let redisState;
 
   try {
-    redisState = await ensureRedisReady();
-    await buildFrontend(backendBaseUrl);
-    backendProcess = await startBackend(backendPort, previewBaseUrl);
-    previewProcess = await startPreview(previewPort, backendBaseUrl);
+    if (useDeployedTarget) {
+      log(`Running e2e against deployed target: ${previewBaseUrl}`);
+      await waitForServer(previewBaseUrl);
+    } else {
+      redisState = await ensureRedisReady();
+      await buildFrontend(backendBaseUrl);
+      backendProcess = await startBackend(backendPort, previewBaseUrl);
+      previewProcess = await startPreview(previewPort, backendBaseUrl);
+    }
 
     const launchOptions = { headless: true };
     const browserExecutable = resolveBrowserExecutablePath();
@@ -333,68 +445,10 @@ async function run() {
     const page = await context.newPage();
 
     const secretText = `E2E secret ${Date.now()}`;
-
-    log("Opening create page...");
-    await page.goto("/");
-    await page.getByLabel("Nội dung bí mật").fill(secretText);
-    await page.getByRole("button", { name: "Tạo link bí mật" }).click();
-
-    const secretLinkInput = page.getByLabel("Secret link");
-    await secretLinkInput.waitFor({ state: "visible" });
-    const secretLink = await secretLinkInput.inputValue();
-    if (!secretLink.includes("#")) {
-      throw new Error(`Generated secret link is missing a fragment: ${secretLink}`);
-    }
-
-    log("Opening reveal link...");
-    await page.goto(secretLink);
-
-    const consentButton = page.getByRole("button", { name: /Tôi hiểu rồi/i });
-    await consentButton.click();
-
-    const revealSessionResponsePromise = page.waitForResponse(
-      (response) =>
-        response.request().method() === "POST" &&
-        response.url().includes("/api/reveal-sessions"),
-    );
-
-    const openSecretResponsePromise = page.waitForResponse(
-      (response) =>
-        response.request().method() === "POST" &&
-        response.url().includes("/api/secrets/") &&
-        response.url().includes("/open"),
-    );
-
-    const openEnvelope = page.getByRole("button", { name: "Mở lá thư bí mật" });
-    await openEnvelope.waitFor({ state: "visible" });
-    await openEnvelope.focus();
-    await openEnvelope.press("Enter");
-
-    const revealSessionResponse = await revealSessionResponsePromise;
-    if (revealSessionResponse.status() !== 201) {
-      throw new Error(`Expected reveal session response 201, got ${revealSessionResponse.status()}`);
-    }
-
-    const openSecretResponse = await openSecretResponsePromise;
-    if (openSecretResponse.status() !== 200) {
-      throw new Error(`Expected open secret response 200, got ${openSecretResponse.status()}`);
-    }
-
-    const requestHeaders = openSecretResponse.request().headers();
-    if (!requestHeaders["x-reveal-session"]) {
-      throw new Error("Expected X-Reveal-Session header to be sent with open request");
-    }
-
-    await page.getByText(secretText, { exact: true }).waitFor({ state: "visible" });
-
-    log("Verifying consumed state on a fresh revisit...");
-    const consumedPage = await context.newPage();
-    try {
-      await consumedPage.goto(secretLink);
-      await consumedPage.getByText("Liên kết này đã được mở một lần trước đó.").waitFor({ state: "visible" });
-    } finally {
-      await consumedPage.close().catch(() => {});
-    }
+    const secretLink = await createSecretViaUi(page, secretText);
+    await openSecretAndVerify(page, secretLink, secretText);
+    await expectConsumedState(context, secretLink);
+    await verifyFragmentGuardrails(page, context);
 
     log("E2E flow passed.");
   } finally {

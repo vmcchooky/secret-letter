@@ -233,6 +233,7 @@ Automated tests are available:
 
 1. Unit/component tests: `npm test`
 2. End-to-end browser flow: `npm run test:e2e`
+3. Deployed-site browser flow: `E2E_TARGET_BASE_URL=https://secret.quorix.io.vn npm run test:e2e`
 
 Manual testing workflow is still available if you want to poke the app by hand:
 

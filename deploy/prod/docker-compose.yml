@@ -7,6 +7,8 @@ services:
     restart: always
     expose:
       - "8080"
+    ports:
+      - "127.0.0.1:18080:8080"
     env_file:
       - .env
     environment:
@@ -15,6 +17,13 @@ services:
       - APP_PORT=8080
       - REDIS_ADDR=redis:6379
       - RATE_LIMIT_ENABLED=true
+    read_only: true
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,nodev,size=16m,mode=1777
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
     depends_on:
       - redis
     healthcheck:
@@ -41,6 +50,7 @@ services:
   caddy:
     image: caddy:2-alpine
     container_name: secret-letter-caddy
+    profiles: ["bundled-edge"]
     restart: always
     ports:
       - "80:80"

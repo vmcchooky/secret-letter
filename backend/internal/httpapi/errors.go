@@ -2,7 +2,7 @@ package httpapi
 
 import (
 	"encoding/json"
-	"log"
+	"log/slog"
 	"net/http"
 	"time"
 )
@@ -189,58 +189,40 @@ func RespondError(w http.ResponseWriter, r *http.Request, err error) {
 func logError(r *http.Request, err *AppError, requestID string) {
 	// Only log errors that are not client errors (4xx)
 	if err.StatusCode >= 500 {
-		logEntry := map[string]interface{}{
-			"timestamp":  time.Now().UTC().Format(time.RFC3339),
-			"level":      "error",
-			"event":      "http_error",
-			"request_id": requestID,
-			"method":     r.Method,
-			"path":       sanitizeLogPath(r.URL.Path),
-			"error_code": err.Code,
-			"message":    err.Message,
-			"status":     err.StatusCode,
+		args := []any{
+			slog.String("request_id", requestID),
+			slog.String("method", r.Method),
+			slog.String("path", sanitizeLogPath(r.URL.Path)),
+			slog.String("error_code", string(err.Code)),
+			slog.Int("status", err.StatusCode),
 		}
 
-		// Add underlying error if present (for debugging)
 		if err.Err != nil {
-			logEntry["underlying_error"] = err.Err.Error()
+			args = append(args, slog.String("underlying_error", err.Err.Error()))
 		}
 
-		logJSON, _ := json.Marshal(logEntry)
-		log.Println(string(logJSON))
+		slog.ErrorContext(r.Context(), err.Message, args...)
 	} else {
 		// For client errors (4xx), log at info level with less detail
-		logEntry := map[string]interface{}{
-			"timestamp":  time.Now().UTC().Format(time.RFC3339),
-			"level":      "info",
-			"event":      "client_error",
-			"request_id": requestID,
-			"method":     r.Method,
-			"path":       sanitizeLogPath(r.URL.Path),
-			"error_code": err.Code,
-			"status":     err.StatusCode,
-		}
-
-		logJSON, _ := json.Marshal(logEntry)
-		log.Println(string(logJSON))
+		slog.InfoContext(r.Context(), "client_error",
+			slog.String("request_id", requestID),
+			slog.String("method", r.Method),
+			slog.String("path", sanitizeLogPath(r.URL.Path)),
+			slog.String("error_code", string(err.Code)),
+			slog.Int("status", err.StatusCode),
+		)
 	}
 }
 
 // logUnknownError logs an unexpected error
 func logUnknownError(r *http.Request, err error, requestID string) {
-	logEntry := map[string]interface{}{
-		"timestamp":  time.Now().UTC().Format(time.RFC3339),
-		"level":      "error",
-		"event":      "unknown_error",
-		"request_id": requestID,
-		"method":     r.Method,
-		"path":       sanitizeLogPath(r.URL.Path),
-		"error":      err.Error(),
-		"status":     http.StatusInternalServerError,
-	}
-
-	logJSON, _ := json.Marshal(logEntry)
-	log.Println(string(logJSON))
+	slog.ErrorContext(r.Context(), "unknown_error",
+		slog.String("request_id", requestID),
+		slog.String("method", r.Method),
+		slog.String("path", sanitizeLogPath(r.URL.Path)),
+		slog.String("error", err.Error()),
+		slog.Int("status", http.StatusInternalServerError),
+	)
 }
 
 // AddValidationError adds a validation error to the error details

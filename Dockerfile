@@ -19,13 +19,20 @@ RUN CGO_ENABLED=0 GOOS=linux go build -ldflags="-w -s" -o secret-letter-api ./ba
 # Final minimal stage
 FROM alpine:3.20
 
+RUN addgroup -S app \
+    && adduser -S -D -H -h /app -G app app \
+    && mkdir -p /app \
+    && chown app:app /app
+
 WORKDIR /app
 
 # Copy ca-certificates
 COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
 
 # Copy the built binary
-COPY --from=builder /app/secret-letter-api .
+COPY --chown=app:app --from=builder /app/secret-letter-api /app/secret-letter-api
+
+USER app:app
 
 # Expose API port
 EXPOSE 8080

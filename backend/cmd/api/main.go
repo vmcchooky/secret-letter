@@ -1,8 +1,13 @@
 package main
 
 import (
+	"context"
 	"log"
+	"log/slog"
 	"net/http"
+	"os"
+	"os/signal"
+	"syscall"
 	"time"
 
 	"secret-letter/backend/internal/config"
@@ -12,8 +17,23 @@ import (
 	"github.com/redis/go-redis/v9"
 )
 
+const (
+	redisDialTimeout  = 2 * time.Second
+	redisReadTimeout  = 3 * time.Second
+	redisWriteTimeout = 3 * time.Second
+	redisPoolTimeout  = 3 * time.Second
+	serverShutdownTTL = 15 * time.Second
+)
+
 func main() {
-	cfg := config.Load()
+	// Initialize structured logger
+	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
+	slog.SetDefault(logger)
+
+	cfg, err := config.Load()
+	if err != nil {
+		log.Fatalf("failed to load config: %v", err)
+	}
 
 	// Initialize Redis client with connection pooling
 	redisClient := redis.NewClient(&redis.Options{
@@ -23,7 +43,16 @@ func main() {
 		PoolSize:     cfg.RedisPoolSize,
 		MinIdleConns: cfg.RedisMinIdle,
 		MaxRetries:   cfg.RedisMaxRetries,
+		DialTimeout:  redisDialTimeout,
+		ReadTimeout:  redisReadTimeout,
+		WriteTimeout: redisWriteTimeout,
+		PoolTimeout:  redisPoolTimeout,
 	})
+	defer func() {
+		if err := redisClient.Close(); err != nil {
+			log.Printf("warning: failed to close Redis client cleanly: %v", err)
+		}
+	}()
 
 	// Create Redis-backed secret service
 	secretService, err := secret.NewRedisService(redisClient)
@@ -39,8 +68,9 @@ func main() {
 	}
 
 	log.Printf("starting %s on %s", cfg.ServiceName, cfg.ListenAddress())
-	log.Printf("Redis: %s (pool: %d, min idle: %d, max retries: %d)",
-		cfg.RedisAddr, cfg.RedisPoolSize, cfg.RedisMinIdle, cfg.RedisMaxRetries)
+	log.Printf("Redis: %s (pool: %d, min idle: %d, max retries: %d, dial/read/write/pool timeouts: %s/%s/%s/%s)",
+		cfg.RedisAddr, cfg.RedisPoolSize, cfg.RedisMinIdle, cfg.RedisMaxRetries,
+		redisDialTimeout, redisReadTimeout, redisWriteTimeout, redisPoolTimeout)
 	if cfg.RateLimitEnabled {
 		log.Printf("Rate limiting enabled: create=%d/%s, consume=%d/%s, status=%d/%s, reveal_session=%d/%s",
 			cfg.CreateLimit, cfg.RateLimitWindow,
@@ -59,7 +89,33 @@ func main() {
 		IdleTimeout:  120 * time.Second,
 	}
 
-	if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-		log.Fatal(err)
+	serverErrCh := make(chan error, 1)
+	go func() {
+		serverErrCh <- srv.ListenAndServe()
+	}()
+
+	shutdownSignalCtx, stopSignals := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
+	defer stopSignals()
+
+	select {
+	case err := <-serverErrCh:
+		if err != nil && err != http.ErrServerClosed {
+			log.Fatal(err)
+		}
+	case <-shutdownSignalCtx.Done():
+		log.Printf("shutdown signal received, draining %s", cfg.ServiceName)
+
+		shutdownCtx, cancel := context.WithTimeout(context.Background(), serverShutdownTTL)
+		defer cancel()
+
+		if err := srv.Shutdown(shutdownCtx); err != nil {
+			log.Fatalf("graceful shutdown failed: %v", err)
+		}
+
+		if err := <-serverErrCh; err != nil && err != http.ErrServerClosed {
+			log.Fatalf("server exited with error during shutdown: %v", err)
+		}
+
+		log.Printf("%s shut down cleanly", cfg.ServiceName)
 	}
 }

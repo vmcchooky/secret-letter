@@ -4,8 +4,7 @@ import (
 	"context"
 	"crypto/sha256"
 	"encoding/hex"
-	"encoding/json"
-	"log"
+	"log/slog"
 	"net"
 	"net/http"
 	"strings"
@@ -71,7 +70,7 @@ func (s *Server) Handler() http.Handler {
 						s.withMetrics(
 							s.withRateLimiting(
 								withRequestSizeLimit(15*1024, // 15KB limit
-									withRequestLogging(mux)))))))))
+									s.withRequestLogging(mux)))))))))
 }
 
 func withRequestID(next http.Handler) http.Handler {
@@ -163,7 +162,7 @@ func (rw *responseWriter) WriteHeader(code int) {
 	rw.ResponseWriter.WriteHeader(code)
 }
 
-func withRequestLogging(next http.Handler) http.Handler {
+func (s *Server) withRequestLogging(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		start := time.Now()
 
@@ -173,30 +172,22 @@ func withRequestLogging(next http.Handler) http.Handler {
 		next.ServeHTTP(rw, r)
 
 		duration := time.Since(start)
-		requestID := r.Context().Value(requestIDKey)
-		if requestID == nil {
-			requestID = ""
-		}
+		requestID := getRequestID(r.Context())
 
-		// Hash IP and User-Agent for privacy
-		ipHash := hashString(r.RemoteAddr)
+		// Hash the trusted client IP and User-Agent for privacy.
+		clientIP := s.getClientIP(r)
+		ipHash := hashString(clientIP)
 		uaHash := hashString(r.UserAgent())
 
-		logEntry := map[string]interface{}{
-			"timestamp":       time.Now().UTC().Format(time.RFC3339),
-			"level":           "info",
-			"event":           "http_request",
-			"request_id":      requestID,
-			"method":          r.Method,
-			"path":            sanitizeLogPath(r.URL.Path),
-			"status":          rw.statusCode,
-			"duration_ms":     duration.Milliseconds(),
-			"ip_hash":         ipHash,
-			"user_agent_hash": uaHash,
-		}
-
-		logJSON, _ := json.Marshal(logEntry)
-		log.Println(string(logJSON))
+		slog.InfoContext(r.Context(), "http_request",
+			slog.String("request_id", requestID),
+			slog.String("method", r.Method),
+			slog.String("path", sanitizeLogPath(r.URL.Path)),
+			slog.Int("status", rw.statusCode),
+			slog.Int64("duration_ms", duration.Milliseconds()),
+			slog.String("ip_hash", ipHash),
+			slog.String("user_agent_hash", uaHash),
+		)
 	})
 }
 

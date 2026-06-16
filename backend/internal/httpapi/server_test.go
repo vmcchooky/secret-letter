@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"fmt"
+	"log/slog"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -238,8 +240,8 @@ func TestRequestSizeLimit(t *testing.T) {
 	})
 
 	t.Run("rejects request exceeding size limit", func(t *testing.T) {
-		// Create a payload larger than 15KB
-		largePayload := strings.Repeat("a", 16*1024)
+		// Create a payload larger than 15KB with valid JSON structure
+		largePayload := `{"content":"` + strings.Repeat("a", 16*1024) + `"}`
 		body := bytes.NewBufferString(largePayload)
 		req := httptest.NewRequest(http.MethodPost, "/api/secrets", body)
 		req.Header.Set("Content-Type", "application/json")
@@ -278,5 +280,42 @@ func TestCORSHeaders(t *testing.T) {
 		if got := rec.Header().Get(header); got != want {
 			t.Errorf("expected %s to be %q, got %q", header, want, got)
 		}
+	}
+}
+
+func TestRequestLoggingUsesTrustedClientIP(t *testing.T) {
+	server := NewServer(config.Config{
+		ServiceName:       "test-api",
+		Host:              "127.0.0.1",
+		Port:              "8080",
+		AllowedOrigin:     "http://localhost:5173",
+		TrustedProxyCIDRs: "10.0.0.0/8",
+	}, secret.NewInMemoryService())
+
+	var logBuffer bytes.Buffer
+	logger := slog.New(slog.NewJSONHandler(&logBuffer, nil))
+	originalLogger := slog.Default()
+	slog.SetDefault(logger)
+	defer slog.SetDefault(originalLogger)
+
+	req := httptest.NewRequest(http.MethodGet, "/healthz", nil)
+	req.RemoteAddr = "10.0.0.1:12345"
+	req.Header.Set("X-Forwarded-For", "203.0.113.10")
+	rec := httptest.NewRecorder()
+
+	server.Handler().ServeHTTP(rec, req)
+
+	logOutput := logBuffer.String()
+	expectedForwardedHash := hashString("203.0.113.10")
+	if !strings.Contains(logOutput, fmt.Sprintf(`"ip_hash":"%s"`, expectedForwardedHash)) {
+		t.Fatalf("expected log output to contain forwarded client IP hash %q, got %s", expectedForwardedHash, logOutput)
+	}
+
+	if strings.Contains(logOutput, hashString("10.0.0.1:12345")) {
+		t.Fatalf("log output should not hash the raw remote address with port: %s", logOutput)
+	}
+
+	if strings.Contains(logOutput, hashString("10.0.0.1")) {
+		t.Fatalf("log output should not hash the trusted proxy IP: %s", logOutput)
 	}
 }
