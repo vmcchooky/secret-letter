@@ -492,10 +492,10 @@ export function CreateSecretForm() {
             >
               <div className="otl-modal-card share-card" onClick={(e) => e.stopPropagation()} onContextMenu={blockDecorativeContextMenu}>
                 <h3 style={{ fontFamily: "var(--qx-font-ui, Inter, sans-serif)", fontStyle: "normal", fontWeight: 600, fontSize: "1.25rem" }}>Chia sẻ an toàn</h3>
-                <p style={{ margin: "0 0 1rem", color: "var(--otl-muted)", lineHeight: 1.5 }}>
-                  Ứng dụng không gửi trực tiếp liên kết chứa khóa giải mã tới Telegram, Zalo,
-                  email hay trình chia sẻ tích hợp. Hãy sao chép thủ công toàn bộ liên kết,
-                  hoặc gửi URL và khóa ở hai kênh riêng nếu bạn cần giảm rủi ro lộ khóa.
+                <p style={{ margin: "0 0 1rem", color: "var(--otl-muted)", lineHeight: 1.5, fontSize: "0.9rem" }}>
+                  <strong>Tại sao phải sao chép thủ công?</strong> Các ứng dụng nhắn tin (Zalo, Telegram...) thường tự động quét link để tạo ảnh xem trước. Quá trình này có nguy cơ làm rò rỉ khóa giải mã lên máy chủ của họ.
+                  <br /><br />
+                  Để bảo mật tuyệt đối, hãy sao chép toàn bộ liên kết, hoặc an toàn nhất là gửi URL và Khóa qua hai kênh nhắn tin khác nhau.
                 </p>
                 <div className="otl-share-grid">
                   <TactileButton className="otl-share-item-btn" onClick={() => { void copyToClipboard("Đã sao chép liên kết đầy đủ."); }}>
