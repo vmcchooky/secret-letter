@@ -71,7 +71,7 @@ func (s *Server) Handler() http.Handler {
 						s.withMetrics(
 							s.withRateLimiting(
 								withRequestSizeLimit(15*1024, // 15KB limit
-									withRequestLogging(mux)))))))))
+									s.withRequestLogging(mux)))))))))
 }
 
 func withRequestID(next http.Handler) http.Handler {
@@ -163,7 +163,7 @@ func (rw *responseWriter) WriteHeader(code int) {
 	rw.ResponseWriter.WriteHeader(code)
 }
 
-func withRequestLogging(next http.Handler) http.Handler {
+func (s *Server) withRequestLogging(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		start := time.Now()
 
@@ -173,13 +173,11 @@ func withRequestLogging(next http.Handler) http.Handler {
 		next.ServeHTTP(rw, r)
 
 		duration := time.Since(start)
-		requestID := r.Context().Value(requestIDKey)
-		if requestID == nil {
-			requestID = ""
-		}
+		requestID := getRequestID(r.Context())
 
-		// Hash IP and User-Agent for privacy
-		ipHash := hashString(r.RemoteAddr)
+		// Hash the trusted client IP and User-Agent for privacy.
+		clientIP := s.getClientIP(r)
+		ipHash := hashString(clientIP)
 		uaHash := hashString(r.UserAgent())
 
 		logEntry := map[string]interface{}{

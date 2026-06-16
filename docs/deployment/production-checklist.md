@@ -1,5 +1,7 @@
 # Production Checklist Cho Phuong An Sieu Re
 
+Truoc khi sua code hardening hoac bat dau go-live, doc [production-hardening-upgrade-spec.md](production-hardening-upgrade-spec.md).
+
 ## 1. Muc tieu
 
 Checklist nay dung cho phuong an:
@@ -36,8 +38,9 @@ Checklist nay dung cho phuong an:
 - Redis config tuong thich local va production
 - env vars duoc tach rieng cho frontend va backend
 - `SECRET_ENCRYPTION_KEY` da duoc generate va luu trong secret manager hoac `.env` production
-- Redis volume/data dir da duoc backup truoc khi deploy
+- file cau hinh deploy da duoc backup truoc khi deploy
 - staging da duoc deploy va smoke test truoc production
+- neu dung workflow CD/staging, release bundle da duoc verify qua `release-manifest-*.json` va `release-checksums-*.txt`
 
 ### Quality gate truoc deploy
 
@@ -49,6 +52,7 @@ gosec ./...
 govulncheck ./...
 cd frontend/web-app
 npm ci
+npm test
 npm run build
 npm audit --omit=dev
 ```
@@ -121,7 +125,8 @@ go install golang.org/x/vuln/cmd/govulncheck@latest
 ### Kiem tra
 
 - chi mo cong `80` va `443`, va `22` neu can
-- Redis chi bind localhost
+- khong public Redis tren `6379`
+- Redis chi bind localhost hoac private network
 - backend chay o cong noi bo, vi du `127.0.0.1:8080`
 
 ## 7. Reverse proxy checklist
@@ -136,10 +141,14 @@ go install golang.org/x/vuln/cmd/govulncheck@latest
 - reverse proxy tu `api.secret.quorix.io.vn` vao app Go
 - bat gzip hoac compression co ban
 - log request o muc toi thieu
+- request body limit tai proxy
+- reverse proxy la noi set hoac sanitize `X-Forwarded-For`
+- chay `./scripts/test-trusted-proxy.sh` hoac `./scripts/test-trusted-proxy.ps1` tu may deploy de xac nhan spoofed header khong doi `ip_hash`
 
 ### Kiem tra
 
 - `https://api.secret.quorix.io.vn/healthz` tra ve thanh cong
+- `https://api.secret.quorix.io.vn/readyz` tra ve thanh cong
 - chung chi TLS hop le
 
 ## 8. Backend checklist
@@ -165,6 +174,7 @@ go install golang.org/x/vuln/cmd/govulncheck@latest
 - `RATE_LIMIT_CONSUME_PER_WINDOW=240`
 - `RATE_LIMIT_STATUS_PER_WINDOW=600`
 - `RATE_LIMIT_REVEAL_SESSION_PER_WINDOW=240`
+- khong duoc rely vao default localhost cho `ALLOWED_ORIGIN` hoac `TRUSTED_PROXY_CIDRS`
 
 ### API can co toi thieu
 
@@ -178,9 +188,14 @@ go install golang.org/x/vuln/cmd/govulncheck@latest
 ### Bao mat va on dinh
 
 - validate request body
-- gioi han kich thuoc payload
+- gioi han kich thuoc payload tai API va tai proxy
 - CORS chi mo cho frontend cua ban
 - rate limiting co ban
+- graceful shutdown da duoc implement va verify
+- Redis client co timeout ro rang cho ket noi/doc/ghi
+- neu deploy bang container thi process API chay non-root
+- neu deploy bang container thi root filesystem cua API la read-only va chi cap tmpfs toi thieu cho `/tmp`
+- neu deploy bang container thi API drop toan bo Linux capabilities va giu `no-new-privileges`
 - khong log plaintext, raw token, fragment key, hoac ciphertext dai bat thuong
 - atomic consume voi Redis claim/finalize
 
@@ -189,8 +204,10 @@ go install golang.org/x/vuln/cmd/govulncheck@latest
 ### Cau hinh
 
 - bind `127.0.0.1`
+- giu Redis private trong localhost hoac private compose network
 - dat password neu can, du la chi local
 - bat append-only neu ban muon giam rui ro mat du lieu do restart
+- neu muon dung remote managed Redis thi can mot dot nang cap rieng cho TLS/config
 
 ### Nghiep vu
 
@@ -239,7 +256,20 @@ go install golang.org/x/vuln/cmd/govulncheck@latest
 - neu Redis khong ket noi duoc
 - neu ty le `consume` loi tang bat thuong
 
-## 12. Backup toi thieu
+## 12. Smoke test bat buoc sau deploy
+
+- chay `./scripts/test-production-smoke.sh` hoac `./scripts/test-production-smoke.ps1`
+- tao secret moi va luu lai full link
+- kiem tra `status` truoc khi reveal
+- restart API service/container truoc lan reveal dau va xac nhan secret cu van mo duoc
+- doi `/readyz` ve `200` truoc khi tiep tuc traffic sau restart
+- mo link lan dau thanh cong
+- mo lai link lan hai nhan `consumed`
+- mo link khong co fragment va xac nhan khong bi consume
+- mo link voi fragment sai format va xac nhan loi format
+- gui request qua lon va xac nhan bi chan dung boundary
+
+## 13. Backup toi thieu
 
 ### Can backup gi
 
@@ -259,7 +289,7 @@ Ly do:
 - backup secret da ma hoa van tao them do phuc tap van hanh
 - voi san pham secret-letter, mat secret sau su co co the chap nhan hon so voi lo secret
 
-## 13. Thu tu deploy de xuat
+## 14. Thu tu deploy de xuat
 
 1. Chuan bi frontend build on o local.
 2. Chuan bi backend Go + Redis chay on o local.
@@ -272,12 +302,12 @@ Ly do:
 9. Add DNS `secret.quorix.io.vn`.
 10. Cau hinh env var frontend tro toi API production.
 11. Test full flow create -> reveal -> consumed.
-12. Restart API container/service, tao secret moi, va mo thanh cong de xac nhan `SECRET_ENCRYPTION_KEY` on dinh.
+12. Tao mot secret, restart API container/service, roi mo secret do thanh cong de xac nhan `SECRET_ENCRYPTION_KEY` on dinh.
 13. Test expired flow.
 14. Test preview-bot-safe flow bang cach mo trang ma khong bam reveal.
 15. Kiem tra log khong co plaintext, raw token, fragment key, hoac ciphertext dai bat thuong.
 
-## 14. Tieu chi xem nhu deploy thanh cong
+## 15. Tieu chi xem nhu deploy thanh cong
 
 - `secret.quorix.io.vn` mo duoc
 - tao duoc link moi
@@ -287,8 +317,10 @@ Ly do:
 - secret het han thi tra ve `expired`
 - backend khong log plaintext
 - `/healthz` va `/readyz` tra `healthy` khi Redis san sang, va 503 khi Redis mat ket noi
+- Redis khong public tren internet
+- trusted proxy behavior dung voi topology da chon
 
-## 15. Khuyen nghi cuoi
+## 16. Khuyen nghi cuoi
 
 Khong can lam day du tat ca ky thuat production nang ngay tu dau.
 

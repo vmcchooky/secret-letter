@@ -45,11 +45,11 @@ netstat -ano | findstr :8080
 ls -la .env
 
 # Check environment variables
-env | grep -E "SERVICE_NAME|REDIS_ADDR|PORT"
+env | grep -E "APP_SERVICE_NAME|REDIS_ADDR|APP_PORT"
 ```
 
 **Solution:**
-- Copy `.env.production` to `.env`
+- Copy the deployment-specific env template you actually use to `.env`
 - Fill in all required variables
 - Restart service
 

@@ -13,6 +13,7 @@ This directory contains the complete documentation for the secret-letter applica
 - **[Public HTTP API](contracts/public-http-api.md)** - Complete API specification for frontend-backend communication
 
 ### Deployment and Operations
+- **[Production Hardening Upgrade Spec](deployment/production-hardening-upgrade-spec.md)** - Current hardening scope, gaps, and open questions before implementation
 - **[Deployment Guide](deployment/deployment-guide.md)** - Complete deployment strategy and procedures
 - **[Legacy Docs](deployment/)** - Original Vietnamese deployment documentation (archived)
 
@@ -181,40 +182,17 @@ graph TD
 - [PRODUCTION_CHECKLIST.md](PRODUCTION_CHECKLIST.md) - Deployment checklist
 - [TROUBLESHOOTING.md](TROUBLESHOOTING.md) - Common issues
 
-### ✅ Milestone 4: Rate Limiting and Production Readiness (COMPLETE)
-**Completed:** 2026-04-16
+### 🔧 Current Hardening Focus
 
-**Rate Limiting:**
-- ✅ Redis-based rate limiter (120/hr create, 240/hr consume, 600/hr status, 240/hr reveal session)
-- ✅ Per-IP tracking với X-Forwarded-For support
-- ✅ Rate limit headers (X-RateLimit-*)
-- ✅ 429 responses với Retry-After
-- ✅ Graceful degradation
+Before public go-live, the current focus is operational hardening rather than feature expansion:
 
-**Error Handling:**
-- ✅ Structured error system với AppError
-- ✅ Field-specific validation errors
-- ✅ Multiple validation errors returned together
-- ✅ Error logging với context (no sensitive data)
+- document the remaining runtime and deployment gaps
+- tighten production config expectations
+- align proxy, Redis, and container hardening guidance with the actual codebase
+- update go-live checklists before implementation starts
 
-**Performance:**
-- ✅ Response caching (health check: 10s)
-- ✅ Request metrics và slow request logging
-- ✅ Load testing scripts (PowerShell + Bash)
-- ✅ P95 < 100ms, 100+ req/s
-
-**Production:**
-- ✅ Security headers (HSTS, CSP, X-Frame-Options, etc.)
-- ✅ Production build scripts với security audit
-- ✅ Production config template
-- ✅ Deployment checklist
-- ✅ Troubleshooting guide
-
-**Documentation:**
-- [MILESTONE_4_COMPLETION.md](MILESTONE_4_COMPLETION.md) - Complete report
-- [MILESTONE_4_QUICK_REFERENCE.md](MILESTONE_4_QUICK_REFERENCE.md) - Quick guide
-- [PRODUCTION_CHECKLIST.md](PRODUCTION_CHECKLIST.md) - Deployment checklist
-- [TROUBLESHOOTING.md](TROUBLESHOOTING.md) - Common issues
+**Reference:**
+- [deployment/production-hardening-upgrade-spec.md](deployment/production-hardening-upgrade-spec.md)
 
 ### 📋 Upcoming Milestones
 
