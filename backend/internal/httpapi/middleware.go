@@ -1,9 +1,8 @@
 package httpapi
 
 import (
-	"encoding/json"
 	"fmt"
-	"log"
+	"log/slog"
 	"net"
 	"net/http"
 	"strings"
@@ -85,27 +84,28 @@ func logSlowRequest(r *http.Request, statusCode int, duration time.Duration, req
 		return
 	}
 
-	logEntry := map[string]interface{}{
-		"timestamp":   time.Now().UTC().Format(time.RFC3339),
-		"level":       "warn",
-		"event":       "slow_request",
-		"request_id":  requestID,
-		"method":      r.Method,
-		"path":        r.URL.Path,
-		"status":      statusCode,
-		"duration_ms": duration.Milliseconds(),
+	if duration < 100*time.Millisecond {
+		return
 	}
 
 	// Add warning level based on duration
+	severity := "medium"
+	logLevel := slog.LevelWarn
 	if duration > 500*time.Millisecond {
-		logEntry["level"] = "error"
-		logEntry["severity"] = "critical"
+		logLevel = slog.LevelError
+		severity = "critical"
 	} else if duration > 200*time.Millisecond {
-		logEntry["severity"] = "high"
+		severity = "high"
 	}
 
-	logJSON, _ := json.Marshal(logEntry)
-	log.Println(string(logJSON))
+	slog.Log(r.Context(), logLevel, "slow_request",
+		slog.String("request_id", requestID),
+		slog.String("method", r.Method),
+		slog.String("path", r.URL.Path),
+		slog.Int("status", statusCode),
+		slog.Int64("duration_ms", duration.Milliseconds()),
+		slog.String("severity", severity),
+	)
 }
 
 // withCaching adds response caching middleware
@@ -284,7 +284,7 @@ func parseTrustedProxyCIDRs(raw string) []*net.IPNet {
 
 		_, network, err := net.ParseCIDR(part)
 		if err != nil {
-			log.Printf("warning: ignoring invalid TRUSTED_PROXY_CIDRS entry %q: %v", part, err)
+			slog.Warn("ignoring invalid TRUSTED_PROXY_CIDRS entry", "entry", part, "error", err)
 			continue
 		}
 

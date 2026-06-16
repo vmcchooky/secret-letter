@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"io"
 	"net/http"
 	"secret-letter/backend/internal/secret"
 	"strings"
@@ -83,21 +82,17 @@ func (s *Server) handleCreateSecret(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Read body to trigger MaxBytesReader if size exceeded
-	body, err := io.ReadAll(r.Body)
-	if err != nil {
-		// MaxBytesReader will return error if limit exceeded
-		RespondError(w, r, ErrPayloadTooLarge("Request body exceeds 15KB limit").
-			WithDetail("max_size_bytes", 15*1024))
-		return
-	}
-
 	// Parse JSON
 	var req secret.CreateSecretRequest
-	err = json.Unmarshal(body, &req)
-	if err != nil {
-		RespondError(w, r, ErrInvalidRequest("Invalid JSON request body").
-			WithError(err))
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		// MaxBytesReader will return error if limit exceeded
+		var maxBytesErr *http.MaxBytesError
+		if errors.As(err, &maxBytesErr) || err.Error() == "http: request body too large" {
+			RespondError(w, r, ErrPayloadTooLarge("Request body exceeds 15KB limit").
+				WithDetail("max_size_bytes", 15*1024))
+			return
+		}
+		RespondError(w, r, ErrInvalidRequest("Invalid JSON request body").WithError(err))
 		return
 	}
 

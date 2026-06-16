@@ -4,8 +4,7 @@ import (
 	"context"
 	"crypto/sha256"
 	"encoding/hex"
-	"encoding/json"
-	"log"
+	"log/slog"
 	"net"
 	"net/http"
 	"strings"
@@ -180,21 +179,15 @@ func (s *Server) withRequestLogging(next http.Handler) http.Handler {
 		ipHash := hashString(clientIP)
 		uaHash := hashString(r.UserAgent())
 
-		logEntry := map[string]interface{}{
-			"timestamp":       time.Now().UTC().Format(time.RFC3339),
-			"level":           "info",
-			"event":           "http_request",
-			"request_id":      requestID,
-			"method":          r.Method,
-			"path":            sanitizeLogPath(r.URL.Path),
-			"status":          rw.statusCode,
-			"duration_ms":     duration.Milliseconds(),
-			"ip_hash":         ipHash,
-			"user_agent_hash": uaHash,
-		}
-
-		logJSON, _ := json.Marshal(logEntry)
-		log.Println(string(logJSON))
+		slog.InfoContext(r.Context(), "http_request",
+			slog.String("request_id", requestID),
+			slog.String("method", r.Method),
+			slog.String("path", sanitizeLogPath(r.URL.Path)),
+			slog.Int("status", rw.statusCode),
+			slog.Int64("duration_ms", duration.Milliseconds()),
+			slog.String("ip_hash", ipHash),
+			slog.String("user_agent_hash", uaHash),
+		)
 	})
 }
 

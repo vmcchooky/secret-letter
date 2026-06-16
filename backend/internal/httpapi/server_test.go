@@ -5,7 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"log"
+	"log/slog"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -240,8 +240,8 @@ func TestRequestSizeLimit(t *testing.T) {
 	})
 
 	t.Run("rejects request exceeding size limit", func(t *testing.T) {
-		// Create a payload larger than 15KB
-		largePayload := strings.Repeat("a", 16*1024)
+		// Create a payload larger than 15KB with valid JSON structure
+		largePayload := `{"content":"` + strings.Repeat("a", 16*1024) + `"}`
 		body := bytes.NewBufferString(largePayload)
 		req := httptest.NewRequest(http.MethodPost, "/api/secrets", body)
 		req.Header.Set("Content-Type", "application/json")
@@ -293,14 +293,10 @@ func TestRequestLoggingUsesTrustedClientIP(t *testing.T) {
 	}, secret.NewInMemoryService())
 
 	var logBuffer bytes.Buffer
-	originalWriter := log.Writer()
-	originalFlags := log.Flags()
-	log.SetOutput(&logBuffer)
-	log.SetFlags(0)
-	defer func() {
-		log.SetOutput(originalWriter)
-		log.SetFlags(originalFlags)
-	}()
+	logger := slog.New(slog.NewJSONHandler(&logBuffer, nil))
+	originalLogger := slog.Default()
+	slog.SetDefault(logger)
+	defer slog.SetDefault(originalLogger)
 
 	req := httptest.NewRequest(http.MethodGet, "/healthz", nil)
 	req.RemoteAddr = "10.0.0.1:12345"
