@@ -19,6 +19,16 @@ on:
         required: true
         default: false
         type: boolean
+      vite_api_base_url:
+        description: Optional frontend API base URL override for manual builds
+        required: false
+        default: ""
+        type: string
+      vite_public_secret_origin:
+        description: Optional frontend public secret origin override for manual builds
+        required: false
+        default: ""
+        type: string
 
 permissions:
   contents: write
@@ -48,6 +58,8 @@ jobs:
       frontend_archive_name: ${{ steps.meta.outputs.frontend_archive_name }}
       source_archive_name: ${{ steps.meta.outputs.source_archive_name }}
       manifest_name: ${{ steps.meta.outputs.manifest_name }}
+      vite_api_base_url: ${{ steps.meta.outputs.vite_api_base_url }}
+      vite_public_secret_origin: ${{ steps.meta.outputs.vite_public_secret_origin }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -70,12 +82,28 @@ jobs:
             version="${sanitized_ref}-${short_sha}"
           fi
 
+          default_vite_api_base_url="${{ vars.CD_VITE_API_BASE_URL || 'https://api.secret.quorix.io.vn' }}"
+          default_vite_public_secret_origin="${{ vars.CD_VITE_PUBLIC_SECRET_ORIGIN || 'https://secret.quorix.io.vn' }}"
+          vite_api_base_url="${default_vite_api_base_url}"
+          vite_public_secret_origin="${default_vite_public_secret_origin}"
+
+          if [[ "${GITHUB_EVENT_NAME}" == "workflow_dispatch" ]]; then
+            if [[ -n "${{ inputs.vite_api_base_url }}" ]]; then
+              vite_api_base_url="${{ inputs.vite_api_base_url }}"
+            fi
+            if [[ -n "${{ inputs.vite_public_secret_origin }}" ]]; then
+              vite_public_secret_origin="${{ inputs.vite_public_secret_origin }}"
+            fi
+          fi
+
           echo "version=$version" >> "$GITHUB_OUTPUT"
           echo "artifact_name=release-assets-$version" >> "$GITHUB_OUTPUT"
           echo "backend_archive_name=secret-letter-api-$version.tar.gz" >> "$GITHUB_OUTPUT"
           echo "frontend_archive_name=secret-letter-web-$version.tar.gz" >> "$GITHUB_OUTPUT"
           echo "source_archive_name=secret-letter-source-$version.tar.gz" >> "$GITHUB_OUTPUT"
           echo "manifest_name=release-manifest-$version.json" >> "$GITHUB_OUTPUT"
+          echo "vite_api_base_url=$vite_api_base_url" >> "$GITHUB_OUTPUT"
+          echo "vite_public_secret_origin=$vite_public_secret_origin" >> "$GITHUB_OUTPUT"
 
       - name: Set up Go
         uses: actions/setup-go@v5
@@ -112,8 +140,8 @@ jobs:
       - name: Build frontend release dist
         working-directory: frontend/web-app
         env:
-          VITE_API_BASE_URL: ${{ vars.CD_VITE_API_BASE_URL || 'https://api.secret.quorix.io.vn' }}
-          VITE_PUBLIC_SECRET_ORIGIN: ${{ vars.CD_VITE_PUBLIC_SECRET_ORIGIN || 'https://secret.quorix.io.vn' }}
+          VITE_API_BASE_URL: ${{ steps.meta.outputs.vite_api_base_url }}
+          VITE_PUBLIC_SECRET_ORIGIN: ${{ steps.meta.outputs.vite_public_secret_origin }}
         run: npm run build
 
       - name: Package release artifacts

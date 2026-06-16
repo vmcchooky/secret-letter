@@ -278,7 +278,7 @@ The frontend intentionally has no local `file:` dependency such as `@quorix/ui`,
 
 GitHub Actions CI also validates the shared-edge deployment artifacts by rendering the Compose topology, checking shell/PowerShell helper scripts, validating the Caddyfile, and building the API container image.
 
-For tags, releases, and manual gated staging deploys, `.github/workflows/cd.yml` builds release assets, uploads workflow artifacts, attaches assets to published GitHub Releases, and can run a `staging` environment deployment after approval.
+For tags, releases, and manual gated staging deploys, `.github/workflows/cd.yml` builds release assets, uploads workflow artifacts, attaches assets to published GitHub Releases, and can run a `staging` environment deployment after approval. The manual trigger also accepts frontend URL overrides so staging builds do not have to reuse production origins.
 
 ## Current Features
 

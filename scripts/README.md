@@ -226,6 +226,8 @@ CI helper script for the gated staging deployment path used by `.github/workflow
 
 This script uploads the release source/backend/frontend archives to the staging host over SSH, unpacks them into a versioned release directory, then executes a remote deploy command that you provide through GitHub environment variables.
 
+When `cd.yml` is started manually, you can also override `vite_api_base_url` and `vite_public_secret_origin` so the staged frontend artifact points at staging endpoints instead of production ones.
+
 Before your remote command runs, the script exports:
 - `RELEASE_VERSION`
 - `RELEASE_DIR`
