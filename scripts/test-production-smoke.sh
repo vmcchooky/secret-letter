@@ -119,7 +119,7 @@ echo "[6/8] Revealing the secret created before restart..."
 consume_response="$(curl -s -X POST "$API_BASE_URL/api/secrets/$secret_id/consume" \
   -H "Content-Type: application/json" \
   -d '{}')"
-returned_ciphertext="$(printf '%s' "$consume_response" | extract_json_field ciphertext || true)"
+returned_ciphertext="$(extract_json_field ciphertext "$consume_response" || true)"
 if [ "$returned_ciphertext" != "$TEST_CIPHERTEXT" ]; then
   echo "Expected ciphertext '$TEST_CIPHERTEXT' after restart, got '$returned_ciphertext'"
   echo "$consume_response"
