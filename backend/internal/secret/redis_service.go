@@ -534,7 +534,7 @@ func (s *RedisService) encryptPayload(payload SecretPayload) (*AtRestEnvelope, e
 	if _, err := io.ReadFull(rand.Reader, nonce[8:]); err != nil {
 		return nil, err
 	}
-
+	// #nosec G407 -- False positive: Nonce is dynamically generated using time and randomness
 	ciphertext := gcm.Seal(nil, nonce, plaintext, nil)
 
 	return &AtRestEnvelope{
