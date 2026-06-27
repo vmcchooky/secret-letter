@@ -39,6 +39,7 @@ type Config struct {
 	ConsumeLimit      int
 	StatusLimit       int
 	RevealLimit       int
+	MaxSecretSizeKB   int
 }
 
 func Load() (Config, error) {
