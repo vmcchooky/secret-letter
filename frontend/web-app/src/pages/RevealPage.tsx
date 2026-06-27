@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useLocation } from "react-router-dom";
 import { SecretEnvelopeScene } from "../components/secret-letter/SecretEnvelopeScene";
 import { createRevealSession, getSecretStatus, openSecret } from "../lib/api";
 import {
@@ -28,9 +28,10 @@ const invalidKeyFormatMessage =
 
 export function RevealPage() {
   const { secretId } = useParams<{ secretId: string }>();
+  const location = useLocation();
   const [scene, setScene] = useState<SceneData>(initialScene);
 
-  const fragmentKey = useMemo(() => window.location.hash.slice(1), []);
+  const fragmentKey = useMemo(() => location.hash.slice(1), [location.hash]);
 
   const loadStatus = useCallback(async () => {
     setScene(initialScene);
