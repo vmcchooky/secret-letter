@@ -69,7 +69,7 @@ func (s *Server) Handler() http.Handler {
 					withCaching(
 						s.withMetrics(
 							s.withRateLimiting(
-								withRequestSizeLimit(15*1024, // 15KB limit
+								withRequestSizeLimit(int64(max(15, s.config.MaxSecretSizeKB))*1024, // dynamic limit
 									s.withRequestLogging(mux)))))))))
 }
 
